@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
+using Cinemachine;
 
 public class Player : MonoBehaviour, IDamageable
 {
@@ -22,6 +23,8 @@ public class Player : MonoBehaviour, IDamageable
 
     [SerializeField]
     private Vector3 _direction;
+
+    public bool facingLeft = false;
     //comnbining projects
     [SerializeField]
     private Animator _anim;
@@ -63,6 +66,21 @@ public class Player : MonoBehaviour, IDamageable
 
     public float dataToTrack;
 
+    public CinemachineVirtualCamera vcam;
+
+    public GameObject bossHurtBox;
+
+    public bool isKnocking;
+
+    public bool canBeHurt;
+
+    public Material playerMat;
+
+    public float knockBackCounter = 1.5f;
+
+    public Vector2 knockBackPower;
+
+    public Color playerColor;
     void Start()
     {
         _characterController = GetComponent<CharacterController>();
@@ -70,6 +88,9 @@ public class Player : MonoBehaviour, IDamageable
         _anim = GetComponentInChildren<Animator>();
         _airCollider = GetComponent<CapsuleCollider>();
         _airBody = GetComponent<Rigidbody>();
+        playerMat.color = playerColor;
+        canBeHurt = true;
+
         if (_airCollider != null) { _airCollider.enabled = false; }
         if (_airBody != null) { _airBody.detectCollisions = false; }
         
@@ -119,9 +140,11 @@ public class Player : MonoBehaviour, IDamageable
     }
 
     void CalculateMovement() 
-    { 
+    {
+        Vector3 _facing = transform.localEulerAngles;
+
         //if grounded, we can jump
-        if (_characterController.isGrounded)
+        if (_characterController.isGrounded && !isKnocking)
         {
             float _h = Input.GetAxisRaw("Horizontal");
             _direction = new Vector3(0, 0, _h) * _speed;
@@ -131,7 +154,6 @@ public class Player : MonoBehaviour, IDamageable
             //this will be the vector3 that will control the player
             if (_h != 0 && !_onLadder)
             {
-                Vector3 _facing = transform.localEulerAngles;
                 _facing.y = _direction.z > 0 ? 40 : 140;
                 transform.localEulerAngles = _facing;
             }
@@ -145,9 +167,7 @@ public class Player : MonoBehaviour, IDamageable
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                _direction.y += _jumpForce;
-                _isJumping = true;
-                _anim.SetBool("Jump", true);
+                Jump();
             }        
         }
 
@@ -188,7 +208,6 @@ public class Player : MonoBehaviour, IDamageable
                 _direction.z = _h * _speed;
                 if (_h != 0)
                 {
-                    Vector3 _facing = transform.localEulerAngles;
                     _facing.y = _direction.z > 0 ? 40 : 140;
                     transform.localEulerAngles = _facing;
 
@@ -199,7 +218,100 @@ public class Player : MonoBehaviour, IDamageable
             
             _direction.y -= _gravity * Time.deltaTime;
             _characterController.Move(_direction * Time.deltaTime);
-        } 
+
+            if (!_characterController.isGrounded)
+            {
+                bossHurtBox.SetActive(true);
+            }
+            else 
+            {
+                bossHurtBox.SetActive(false);
+            }
+        }
+
+        if (isKnocking)
+        {
+            float yStore = _direction.y;
+
+            if (!facingLeft)
+            {
+                _direction = Vector3.back * knockBackPower.x;
+            } else 
+            {
+                _direction = Vector3.forward * knockBackPower.x;
+            }
+            
+
+            _direction.y = yStore;
+
+            if (_characterController.isGrounded)
+            {
+                _direction.y = 0f;
+
+            }
+
+            _direction.y += Physics.gravity.y * Time.deltaTime * 5f;
+            _characterController.Move(_direction * Time.deltaTime);
+        }
+
+        if (_facing.y == 40f)
+        {
+            facingLeft = false;
+        }
+        else if(_facing.y == 140f)
+        {
+            facingLeft = true;
+        }
+
+        
+    }
+
+    IEnumerator Blink(float timer) 
+    {
+        bool blinking = false;
+        canBeHurt = false;
+        isKnocking = true;
+        float blinkingTimer = timer;
+        
+
+        while (blinkingTimer > 0) 
+        {
+            blinkingTimer -= .1f;
+          
+            blinking = !blinking;
+
+            if (blinking)
+            {
+                playerMat.color = Color.red;
+            }
+            else
+            {
+                playerMat.color = playerColor;
+            }
+
+            yield return null;
+        }
+        transform.position = new Vector3(-0.005729993f, transform.position.y, transform.position.z);
+        canBeHurt = true;
+        isKnocking = false;
+        playerMat.color = playerColor;
+        blinking = false;     
+    }
+
+    public void Jump() 
+    {
+        _direction.y = 0f;
+        _direction.y += _jumpForce;
+        _isJumping = true;
+        _anim.SetBool("Jump", true);
+    }
+
+    public void EnemyJump()
+    {
+        _direction.y = 0f;
+        _direction.y += _jumpForce * .5f;
+        _isJumping = true;
+        _anim.SetBool("Jump", true);
     }
 
     public void CollectCoin(int _amount) 
@@ -216,13 +328,28 @@ public class Player : MonoBehaviour, IDamageable
 
     public void Damage(int amount) 
     {
-        _health -= amount;
-        UIManager.instance.UpdateLives(_health);
-        UIManager.instance.Notification("Player was damaged!");
-        if (_health < 1)
+        if (canBeHurt) 
         {
-            UIManager.instance.LoadNextLevel(1);
+            _health -= amount;
+            StartCoroutine(Blink(knockBackCounter));
+            UIManager.instance.UpdateLives(_health);
+
+            int randNum = Random.Range(1, AudioManager.instace.sfx.Length - 1);
+
+            AudioManager.instace.PlaySoundEffects(randNum);
+            if (_health < 1)
+            {
+                UIManager.instance.LoadNextLevel(UIManager.instance.levelToLoad);
+            }
         }
+        
+    }
+
+    public void Ensnare(Blamo blamo) 
+    {
+        blamo.Kill();
+        
+        Destroy(this.gameObject);
     }
 
     public int GetCoinsCount() 

@@ -1,16 +1,14 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OwlHopBehaviour : StateMachineBehaviour
+public class StartBossFight : StateMachineBehaviour
 {
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     //override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
-   // {
-       /* GiantBird _giantBird = animator.transform.GetComponentInParent<GiantBird>();
-
-        _giantBird.Jump();*/
-   // }
+    //{
+    //    
+    //}
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
     //override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -18,11 +16,16 @@ public class OwlHopBehaviour : StateMachineBehaviour
     //    
     //}
 
-    // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
-    //override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
-    //{
-    //    
-    //}
+    override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    {
+        Debug.Log("Trying to enter idle from ladder climb");
+        BossController blamo = animator.gameObject.transform.GetComponentInParent<BossController>();
+
+        if (blamo != null)
+        {
+            blamo.currentPhase ++;
+        }
+    }
 
     // OnStateMove is called right after Animator.OnAnimatorMove()
     //override public void OnStateMove(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

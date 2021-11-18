@@ -65,7 +65,7 @@ public class Blamo : Enemy
     Vector3 ledgeDirection;
 
     public GameObject hitBox;
-
+    public GameObject deathDUmmy;
     public override void Init()
     {
         base.Init();
@@ -293,7 +293,7 @@ public class Blamo : Enemy
 
     public void EdgeCheck() 
     {
-        Debug.Log("checking for an edge");
+        
         RaycastHit hit;
         Ray ray = new Ray(floorChecker.transform.position, Vector3.down);
 
@@ -302,6 +302,7 @@ public class Blamo : Enemy
             if (hit.distance > 4)
             {
                 _anim.SetBool("Jumping", true);
+                _anim.SetBool("Grounded", false);
             }
         }
 
@@ -334,6 +335,17 @@ public class Blamo : Enemy
         
     }
 
+    public void Kill()
+    {
+        deathDUmmy.SetActive(true);
+        _anim.SetBool("Kill", true);
+    }
+
+    public void Swallow() 
+    {
+        deathDUmmy.SetActive(false);
+        UIManager.instance.LoadNextLevel(1);
+    }
     /* public void Damage()
      {
          if (health < 1)

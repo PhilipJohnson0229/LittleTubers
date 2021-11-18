@@ -2,76 +2,72 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Turret : Enemy, IDamageable
+public class Turret : Enemy
 {
-    public int health { get ; set; }
 
     [SerializeField]
     private GameObject _bullet;
 
+    public Vector3 _offset;
+
+    public bool playerIsTooClose = false;
+
+    public Transform salvo; 
     public override void Init()
     {
-        base.Init();
-
-        health = base._health;
+        _anim = GetComponent<Animator>();
+        _player = FindObjectOfType<Player>();
     }
 
-    public override void Movement()
+    public override void Update()
     {
-        Vector3 _direction = transform.localPosition - _player.transform.localPosition;
-        Vector3 _facing = transform.localEulerAngles;
+        if (playerIsTooClose) { return; }
+        else if(_player != null)
+        {         
 
-        if (_direction.z > 0)
-        {
-            _facing.y = 180f;
-            transform.localEulerAngles = _facing;
-        }
-        else if (_direction.z < 0)
-        {
-            _facing.y = 0f;
-            transform.localEulerAngles = _facing;
-        }
-    }
-    public void Damage(int amount)
-    {
-        if (health < 1)
-        {
-            Vector3 _offset = new Vector3(0, 0.5f, 0);
-            _anim.SetTrigger("Death");
-            _isDead = true;
-            //casting
-            GameObject _coinDrop = Instantiate(_coin, this.transform.localPosition + _offset, Quaternion.identity) as GameObject;
-            //here we would put code to handle assigning multiple coins if we want to go that route
-            _coinDrop.GetComponent<Coin>()._amount = base._coinsAmount;
-        }
-        else
-        {
-            if (_isDead == true) { return; }
-            health--;
-            _isHit = true;
-            _anim.SetTrigger("Hit");
-            _anim.SetBool("InCombat", true);
-            UIManager _UIManager = GameObject.Find("UI Manager").GetComponent<UIManager>();
-            _UIManager.Notification(this.name + " was damaged!");
-        }
-    }
+            Vector3 _direction = transform.localPosition - _player.transform.localPosition;
 
-    public override void DestroyThis()
-    {
-        Debug.Log("calling the override method");
-        base.DestroyThis();
+            if (_direction.z > 0)
+            {
+                salvo.rotation = Quaternion.Euler( 0, 180f, 0);
+            }
+            else if (_direction.z < 0)
+            {
+
+                salvo.rotation = Quaternion.Euler(0, 0, 0);
+            }
+        }
     }
 
     public override void Attack() 
     {
-        Vector3 _offset = new Vector3(0, 0.5f, 0.5f);
+      
         Vector3 _facing = transform.localEulerAngles;
         
         transform.localEulerAngles = _facing;
        
-        Instantiate(_bullet, this.transform.position + _offset, Quaternion.Euler(_facing));
+        Instantiate(_bullet, salvo.position + _offset, salvo.transform.rotation);
     }
 
+
+    private void OnTriggerEnter(Collider other) 
+    {
+        if (other.tag == "Player") 
+        {
+            playerIsTooClose = true;
+            _anim.SetBool("PlayerTooClose", true);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Player")
+        {
+            playerIsTooClose = false;
+
+            _anim.SetBool("PlayerTooClose", false);
+        }
+    }
     // Start is called before the first frame update
-   
+
 }

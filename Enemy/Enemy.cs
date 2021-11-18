@@ -52,7 +52,7 @@ public abstract class Enemy : MonoBehaviour
 
     public virtual void Update()
     {
-        if (_anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") && _anim.GetBool("InCombat") == false)
+        if (_anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") && _anim.GetBool("InCombat") == false || _anim.GetBool("Kill") == true)
         {
             return;
         }
@@ -94,25 +94,30 @@ public abstract class Enemy : MonoBehaviour
             transform.position = Vector3.MoveTowards(transform.position, _currentTarget, _speed * Time.deltaTime);
         }
 
-        float _distance = Vector3.Distance(this.transform.localPosition, _player.transform.localPosition);
-        if (_distance > 5.0f)
+        if (_player != null) 
         {
-            _isHit = false;
-            _anim.SetBool("InCombat", false);
+            float _distance = Vector3.Distance(this.transform.localPosition, _player.transform.localPosition);
+            if (_distance > 5.0f)
+            {
+                _isHit = false;
+                _anim.SetBool("InCombat", false);
+            }
+
+            Vector3 _direction = transform.localPosition - _player.transform.localPosition;
+
+            if (_direction.z > 0 && _anim.GetBool("InCombat") == true)
+            {
+                _facing.y = 180f;
+                transform.localEulerAngles = _facing;
+            }
+            else if (_direction.z < 0 && _anim.GetBool("InCombat") == true)
+            {
+                _facing.y = 0f;
+                transform.localEulerAngles = _facing;
+            }
         }
 
-        Vector3 _direction = transform.localPosition - _player.transform.localPosition;
-
-        if (_direction.z > 0 && _anim.GetBool("InCombat") == true)
-        {
-            _facing.y = 180f;
-            transform.localEulerAngles = _facing;
-        }
-        else if (_direction.z < 0 && _anim.GetBool("InCombat") == true)
-        {
-            _facing.y = 0f;
-            transform.localEulerAngles = _facing;
-        }
+        
     }
     //an abstract methods constructor is an interface with a child class
     //basically the child class is required to call implement these methods

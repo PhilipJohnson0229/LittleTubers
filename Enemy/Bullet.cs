@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
+    public GameObject hitEffect;
     private void Start()
     {
         Destroy(this.gameObject, 5.0f);
@@ -11,7 +12,7 @@ public class Bullet : MonoBehaviour
 
     void Update()
     {
-        transform.Translate(Vector3.forward * 3f * Time.deltaTime);
+        transform.Translate(Vector3.down * 3f * Time.deltaTime);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -23,8 +24,15 @@ public class Bullet : MonoBehaviour
             if (_hit != null)
             {
                 _hit.Damage(1);
+                Instantiate(hitEffect, transform.position, Quaternion.identity);
                 Destroy(this.gameObject);
             }
+        }
+
+        if (other.CompareTag("Ground")) 
+        {
+            Instantiate(hitEffect, transform.position, Quaternion.identity);
+            Destroy(this.gameObject);
         }
     }
 }

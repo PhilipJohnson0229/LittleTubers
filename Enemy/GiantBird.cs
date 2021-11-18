@@ -4,6 +4,16 @@ using UnityEngine;
 
 public class GiantBird : Enemy, IDamageable
 {
+    Rigidbody rb;
+
+    public float bombTime, btSet;
+
+    public Transform bombSalvo;
+
+    public GameObject projectile;
+
+    public GameObject deathEffect;
+
     public int health
     {
         get;
@@ -13,20 +23,35 @@ public class GiantBird : Enemy, IDamageable
     public override void Init()
     {
         base.Init();
-       
+        bombTime = btSet;
+        rb = GetComponent<Rigidbody>();
         health = base._health;
         _currentTarget = _pointA.position;
     }
 
     public override void Movement()
     {
-        base.Movement();        
+        base.Movement();
+
+        if (bombTime > 0) 
+        {
+            bombTime -= Time.deltaTime;
+
+            if (bombTime <= 0) 
+            {
+                bombTime = btSet;
+
+                BombsAway();
+            }
+        }
     }
     public void Damage(int amount)
     {
         if (health < 1)
         {
             _anim.SetTrigger("Death");
+            rb.useGravity = true;
+            rb.constraints = RigidbodyConstraints.None;
             _isDead = true;
         }
         else
@@ -40,12 +65,28 @@ public class GiantBird : Enemy, IDamageable
         }
     }
 
-    
-    //if we decide to create jump funcitonality we will use raycast and ignore all layers except for the ground
-    //we will gump with rigidbody.velocity = new vector3() and try to apply gravity
-    //at the end of this line we use a bit shift to only detect layer 8 because a layer mask is a 32 bit array.
-    //basically we are placing a 1 on the 8th layer of a 32bit integer array of 1's and 0's
-    //if we did not use bit shift operator we create a layermask variable and call it with layermask.value instead of 1 << 8
-    //Raycast _hitInfo = Physics.Raycast(transform.position, Vector3.down, 1.0f, 1 << 8 )
-    //Debug.DrawRay(transform.position, Vector3.down, color.green)
+    void BombsAway() 
+    {
+        GameObject bomb = Instantiate(projectile, bombSalvo.position, Quaternion.identity);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "PlayerHurtBox")
+        {
+            Damage(1);
+
+            Player player = other.GetComponentInParent<Player>();
+
+            if (player != null) 
+            {
+                player.EnemyJump();
+            }
+        }
+
+        if (other.tag == "Ground") 
+        {
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
+        }
+    }
 }

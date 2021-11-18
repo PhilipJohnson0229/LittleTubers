@@ -25,4 +25,9 @@ public class BlamoAnimEvents : MonoBehaviour
     {
         hurtBox.SetActive(false);
     }
+
+    public void SendToHell() 
+    {
+        blamo.Swallow();
+    }
 }

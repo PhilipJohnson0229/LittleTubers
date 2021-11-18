@@ -25,8 +25,11 @@ public class Camera : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        Vector3 _targetPosition = new Vector3(transform.position.x + _xOffset, _target.position.y + _yOffset, _target.position.z);
-        // Smoothly move the camera towards that target position
-        transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * _smoothTime);
+        if (_target != null)
+        {
+            Vector3 _targetPosition = new Vector3(transform.position.x + _xOffset, _target.position.y + _yOffset, _target.position.z);
+            // Smoothly move the camera towards that target position
+            transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * _smoothTime);
+        }
     }
 }
