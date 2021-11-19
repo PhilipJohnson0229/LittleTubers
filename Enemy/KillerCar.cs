@@ -11,7 +11,7 @@ public class KillerCar : MonoBehaviour
     private void OnEnable()
     {
         SetCar();
-        AudioManager.instace.PlaySoundEffects(carHorn);
+        AudioManager.instance.PlaySoundEffects(carHorn);
     }
 
     // Update is called once per frame

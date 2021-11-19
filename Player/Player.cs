@@ -334,9 +334,9 @@ public class Player : MonoBehaviour, IDamageable
             StartCoroutine(Blink(knockBackCounter));
             UIManager.instance.UpdateLives(_health);
 
-            int randNum = Random.Range(1, AudioManager.instace.sfx.Length - 1);
+            int randNum = Random.Range(1, AudioManager.instance.sfx.Length - 1);
 
-            AudioManager.instace.PlaySoundEffects(randNum);
+            AudioManager.instance.PlaySoundEffects(randNum);
             if (_health < 1)
             {
                 UIManager.instance.LoadNextLevel(UIManager.instance.levelToLoad);

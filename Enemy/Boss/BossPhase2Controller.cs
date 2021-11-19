@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BossController : MonoBehaviour
+public class BossPhase2Controller : MonoBehaviour
 {
-    public static BossController instance;
+    public static BossPhase2Controller instance;
 
     public Animator anim;
 
@@ -32,7 +32,7 @@ public class BossController : MonoBehaviour
 
     private void OnEnable()
     {
-        AudioManager.instace.PlayMusic(bossMusic);
+        AudioManager.instance.PlayMusic(bossMusic);
         lightBulb.color = Color.green;
     }
 
@@ -131,7 +131,7 @@ public class BossController : MonoBehaviour
         {
             //AudioManager.instace.PlaySoundEffects(bossHit);
             //AudioManager.instace.PlaySoundEffects(bossDeathShout);
-            AudioManager.instace.PlayMusic(AudioManager.instace.levelMusicToPlay);
+            AudioManager.instance.PlayMusic(AudioManager.instance.levelMusicToPlay);
             yield return new WaitForSeconds(exitRevealTime);
             //victoryZone.SetActive(true);
         }

@@ -9,9 +9,9 @@ public class BossDamagePoint : MonoBehaviour
     {
         if (other.tag == "PlayerHurtBox")
         {
-            if (BossController.instance.canBeHit == true)
+            if (BossPhase2Controller.instance.canBeHit == true)
             {
-                BossController.instance.DamageBoss();
+                BossPhase2Controller.instance.DamageBoss();
 
                 Player player = other.gameObject.GetComponentInParent<Player>();
 

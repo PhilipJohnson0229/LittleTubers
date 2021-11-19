@@ -6,7 +6,7 @@ using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager instace;
+    public static AudioManager instance;
 
     public AudioSource[] musicTracks;
     public AudioSource[] sfx;
@@ -17,7 +17,7 @@ public class AudioManager : MonoBehaviour
     //private int currentTrack;
     void Awake()
     {
-        instace = this;
+        instance = this;
     }
 
     // Update is called once per frame

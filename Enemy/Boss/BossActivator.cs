@@ -6,7 +6,7 @@ public class BossActivator : MonoBehaviour
 {
     public static BossActivator instance;
 
-    public GameObject entrance, theBoss;
+    public GameObject entrance, theBoss, walls;
 
     private void Awake()
     {
@@ -20,6 +20,7 @@ public class BossActivator : MonoBehaviour
             entrance.SetActive(false);
             theBoss.SetActive(true);
             gameObject.SetActive(false);
+            walls.SetActive(true);
         }
     }
 }
