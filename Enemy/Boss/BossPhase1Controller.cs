@@ -18,11 +18,11 @@ public class BossPhase1Controller : MonoBehaviour
 
     public BossPhase currentPhase = BossPhase.Intro;
 
-    public bool canBeHit = true, canMove = false;
+    public bool canBeHit, canMove = false;
 
     public int bossMusic, bossDeath, bossDeathShout, bossHit;
 
-    public Vector3 direction, playerDirection;
+    public Vector3 direction, playerDirection, leftPillarSetTrans, rightPillarSetTrans;
 
     public Transform trackedTarget, leftPillar, rightPillar, playerModel, player;
 
@@ -40,6 +40,7 @@ public class BossPhase1Controller : MonoBehaviour
     private void OnEnable()
     {
         //AudioManager.instance.PlayMusic(bossMusic);
+        
     }
 
     void Update()
@@ -82,10 +83,44 @@ public class BossPhase1Controller : MonoBehaviour
         }*/
     }
 
-    public void ExitIntro()
+    public void SetPhase() 
     {
-        currentPhase = BossPhase.Phase1;
-        anim.SetBool("Phase1", true);
+        currentPhase++;
+
+        CheckPhase();
+       
+    }
+
+    public void CheckPhase() 
+    {
+        switch (currentPhase)
+        {
+            case BossPhase.Intro:
+                currentPhase++;
+                CheckPhase();
+                break;
+            case BossPhase.Phase1:
+                anim.SetBool("Phase1", true);
+                break;
+            case BossPhase.Phase2:
+                anim.SetBool("Phase2", true);
+                anim.SetBool("Phase1", false);
+
+                speed *= 1.1f;
+
+                break;
+            case BossPhase.Phase3:
+                anim.SetBool("Phase3", true);
+                anim.SetBool("Phase2", false);
+
+                speed *= 1.2f;
+                break;
+            case BossPhase.End:
+                anim.SetTrigger("End");
+                StartCoroutine(EndBoss());
+                break;
+
+        }
     }
 
     public void ChasePlayer(Vector3 direction) 
@@ -100,17 +135,16 @@ public class BossPhase1Controller : MonoBehaviour
 
         if (trackedTarget == rightPillar)
         {
-            Debug.Log("looking left");
             facing.y = 40f;
             playerModel.localEulerAngles = facing;
             
             h = 1f;
 
-            //Vector3 _attackPosition = new Vector3(transform.position.x, transform.position.y, (transform.localPosition.z - _player.transform.localPosition.z));
+        
         }
         else if (trackedTarget == leftPillar)
         {
-            Debug.Log("looking right");
+            
             facing.y = 140f;
             playerModel.localEulerAngles = facing;
             
@@ -124,80 +158,76 @@ public class BossPhase1Controller : MonoBehaviour
         anim.SetBool("Attacking", true);
     }
 
+    //we will rely on the animation to subtract health since ontriggerenter sucks
+    public void SubtractHealth() 
+    {
+        health--;
+
+        if (health <= 0)
+        {
+            health = 3;
+            canBeHit = true;
+            anim.SetBool("CanBeHit", true);
+            StartCoroutine(Blink(10f));
+        }
+    }
+
     public void DamageBoss()
     {
         //AudioManager.instace.PlaySoundEffects(bossHit);
-
-        
-        health--;
+       
+        //the hurt animation will manage the health decrement
         if (currentPhase != BossPhase.End)
         {
             anim.SetTrigger("Hurt");
             StartCoroutine(Blink(2.5f));
         }
 
-        if (health <= 0)
-        {
-            health = 3;
-            currentPhase++;
-            StartCoroutine(Blink(10f));
-        }
+        CheckPhase();
 
+       
+    }
 
-        switch (currentPhase)
-        {
-            case BossPhase.Phase1:
-                anim.SetBool("Phase1", true);
-                break;
-            case BossPhase.Phase2:
-                anim.SetBool("Phase2", true);
-                anim.SetBool("Phase1", false);
-
-                speed *= 1.5f;
-
-                break;
-            case BossPhase.Phase3:
-                anim.SetBool("Phase3", true);
-                anim.SetBool("Phase2", false);
-
-                speed *= 2f;
-                break;
-            case BossPhase.End:
-                anim.SetTrigger("End");
-                StartCoroutine(EndBoss());
-                break;
-
-        }
-
+    public void ChangeTarget() 
+    {
+        
         if (trackedTarget == leftPillar)
         {
             trackedTarget = rightPillar;
-        } else if (trackedTarget == rightPillar)
+        }
+        else if (trackedTarget == rightPillar)
         {
             trackedTarget = leftPillar;
         }
+
+        Debug.Log("change target was called");
     }
 
     public void SetTarget() 
     {
-        Debug.Log("set target");
-        if (playerDistance < 0) 
+
+        if (trackedTarget == null) 
         {
-            trackedTarget = rightPillar;
-            h = 1;
-        }
-        else if(playerDistance > 0)
-        {
-            trackedTarget = leftPillar;
-            h = -1; 
+            if (playerDistance < 0)
+            {
+                trackedTarget = rightPillar;
+
+            }
+            else if (playerDistance > 0)
+            {
+                trackedTarget = leftPillar;
+
+            }
+
+            Debug.Log("target has been set to " + trackedTarget + " with the set target method");
+
         }
     }
 
+ 
     IEnumerator Blink(float time)
     {
         bool isBlinking = false;
-
-        canBeHit = false;
 
         while (time > 0)
         {
@@ -219,7 +249,7 @@ public class BossPhase1Controller : MonoBehaviour
             yield return new WaitForSeconds(.05f);
         }
 
-        canBeHit = true;
+       
     }
 
     IEnumerator EndBoss()
@@ -233,12 +263,16 @@ public class BossPhase1Controller : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Wall")
+        if (other.tag == "Left Wall")
         {
-            if (canBeHit == true)
-            {
-                DamageBoss();
-            }
+            DamageBoss();
+            transform.position = leftPillarSetTrans;
+           
+        }
+        else if (other.tag == "Right Wall")
+        {
+            DamageBoss();
+            transform.position = rightPillarSetTrans;
         }
 
     }

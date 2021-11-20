@@ -8,9 +8,23 @@ public class BossAnimEvents : MonoBehaviour
 
 
     // Update is called once per frame
-    public void InitiateBossBattle() 
+    public void PhaseCheck() 
     {
-        BossPhase1Controller.instance.ExitIntro();
-        BossPhase1Controller.instance.SetTarget();
+        BossPhase1Controller.instance.SetPhase();
+    }
+
+    public void SubtractHealth() 
+    {
+        BossPhase1Controller.instance.SubtractHealth();
+    }
+
+    public void SetTarget() 
+    {
+        BossPhase1Controller.instance.SetTarget();  
+    }
+
+    public void CheckTarget() 
+    {
+        BossPhase1Controller.instance.ChangeTarget();
     }
 }
