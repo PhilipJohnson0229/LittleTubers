@@ -10,6 +10,11 @@ public class BossAnimEvents : MonoBehaviour
     // Update is called once per frame
     public void PhaseCheck() 
     {
+        BossPhase1Controller.instance.SetInitialPhase();
+    }
+
+    public void BossPhaseCheckFromWall() 
+    {
         BossPhase1Controller.instance.SetPhase();
     }
 
@@ -26,5 +31,10 @@ public class BossAnimEvents : MonoBehaviour
     public void CheckTarget() 
     {
         BossPhase1Controller.instance.ChangeTarget();
+    }
+
+    public void SendToHell()
+    {
+        BossPhase1Controller.instance.Swallow();
     }
 }

@@ -352,6 +352,13 @@ public class Player : MonoBehaviour, IDamageable
         Destroy(this.gameObject);
     }
 
+    public void BossEnsnare(BossPhase1Controller blamo)
+    {
+        blamo.Kill();
+
+        Destroy(this.gameObject);
+    }
+
     public int GetCoinsCount() 
     {
         return _coin;
