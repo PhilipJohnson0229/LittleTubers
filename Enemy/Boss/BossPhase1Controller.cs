@@ -20,17 +20,20 @@ public class BossPhase1Controller : MonoBehaviour
 
     public bool canBeHit, isLunging = false, canMove = false, playerHurtMe = false, gameStarted = true;
 
-    public int bossMusic, bossDeath, bossDeathShout, bossHit;
+    public int bossMusic, bossDeath, bossDeathShout, bossHit, crowIndex = 0;
 
     public Vector3 direction, playerDirection, leftPillarSetTrans, rightPillarSetTrans;
 
-    public Transform trackedTarget, leftPillar, rightPillar, playerModel, player;
+    public Transform trackedTarget, leftPillar, rightPillar, playerModel, player, crowSpawnPoint;
 
     public SkinnedMeshRenderer mr;
 
     public float targetDistance, playerDistance, h, speed, speedSetter;
 
-    public GameObject phase2Boss, deathDUmmy;
+    public GameObject phase2Boss, deathDUmmy, crowDummy;
+
+    public GameObject crowToSpawn;
+
 
     private void Awake()
     {
@@ -92,7 +95,7 @@ public class BossPhase1Controller : MonoBehaviour
         if (gameStarted) 
         {
             currentPhase++;
-            health = 3;
+            health = 1;
             CheckPhase();
             Debug.Log("set phase was called");
         }
@@ -104,7 +107,7 @@ public class BossPhase1Controller : MonoBehaviour
         if (playerHurtMe) 
         {
             currentPhase++;
-            health = 3;
+            health = 1;
             CheckPhase();
             Debug.Log("set phase was called");
         }
@@ -118,36 +121,31 @@ public class BossPhase1Controller : MonoBehaviour
                 currentPhase++;
                 CheckPhase();
                 break;
+
             case BossPhase.Phase1:
                 anim.SetBool("Phase1", true);
                 break;
+
             case BossPhase.Phase2:
                 anim.SetBool("Phase2", true);
                 anim.SetBool("Phase1", false);
-                if (!isLunging) 
-                {
-                    speedSetter *= 1.1f;
-                }
-                
-
+                speedSetter *= 1.1f;
                 break;
+
             case BossPhase.Phase3:
                 anim.SetBool("Phase3", true);
                 anim.SetBool("Phase2", false);
-                if (!isLunging)
-                {
-                    speedSetter *= 1.2f;
-                }
+                speedSetter *= 1.2f;
                 break;
+
             case BossPhase.End:
-                anim.SetBool("isDead", true);
                 StartCoroutine(EndBoss());
                 break;
 
         }
     }
 
-    public void ChasePlayer(Vector3 direction) 
+    void ChasePlayer(Vector3 direction) 
     {
         Vector3 facing = playerModel.localEulerAngles;
 
@@ -186,7 +184,7 @@ public class BossPhase1Controller : MonoBehaviour
       
 
 
-        if (Mathf.Abs(playerDistance) < 5) 
+        if (Mathf.Abs(playerDistance) < 4) 
         {
             AttackLunge();
         }
@@ -206,7 +204,7 @@ public class BossPhase1Controller : MonoBehaviour
 
         if (health <= 0)
         {
-            health = 3;
+            health = 1;
             canBeHit = true;
             anim.SetBool("CanBeHit", true);
             StartCoroutine(Blink(10f));
@@ -273,6 +271,13 @@ public class BossPhase1Controller : MonoBehaviour
         UIManager.instance.LoadNextLevel(0);
     }
 
+    public void ReleaseTheCrow() 
+    {
+        crowToSpawn.transform.position = crowSpawnPoint.position;
+        crowDummy.SetActive(false);
+        crowToSpawn.SetActive(true);        
+    }
+
     IEnumerator Blink(float time)
     {
         bool isBlinking = false;
@@ -304,9 +309,13 @@ public class BossPhase1Controller : MonoBehaviour
     {
         //AudioManager.instace.PlaySoundEffects(bossHit);
         //AudioManager.instace.PlaySoundEffects(bossDeathShout);
+        Debug.Log("end boss was called successfully");
         canMove = false;
         canBeHit = false;
+        anim.SetBool("isDead", true);
+        anim.SetBool("Phase3", false);
         yield return new WaitForSeconds(exitRevealTime);
+        //crowToSpawn.SetActive(false);
         phase2Boss.SetActive(true);
         Destroy(this.gameObject);
         //victoryZone.SetActive(true);

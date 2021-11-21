@@ -87,10 +87,12 @@ public abstract class Enemy : MonoBehaviour
         {
             _currentTarget = _pointA.position;
             _anim.SetTrigger("Idle");
-        }
+        } 
+       
 
         if(_isHit == false)
         {
+            
             transform.position = Vector3.MoveTowards(transform.position, _currentTarget, _speed * Time.deltaTime);
         }
 

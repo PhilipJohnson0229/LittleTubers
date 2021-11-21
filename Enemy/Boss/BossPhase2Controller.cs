@@ -131,6 +131,11 @@ public class BossPhase2Controller : MonoBehaviour
         {
             //AudioManager.instace.PlaySoundEffects(bossHit);
             //AudioManager.instace.PlaySoundEffects(bossDeathShout);
+            GiantBird[] crows = FindObjectsOfType<GiantBird>();
+            foreach (GiantBird crow in crows) 
+            {
+                crow.Damage(1);
+            }
             AudioManager.instance.PlayMusic(AudioManager.instance.levelMusicToPlay);
             yield return new WaitForSeconds(exitRevealTime);
             //victoryZone.SetActive(true);

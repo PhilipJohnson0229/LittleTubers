@@ -47,6 +47,8 @@ public class GiantBird : Enemy, IDamageable
     }
     public void Damage(int amount)
     {
+        health--;
+
         if (health < 1)
         {
             _anim.SetTrigger("Death");
@@ -56,7 +58,6 @@ public class GiantBird : Enemy, IDamageable
         }
         else
         {
-            health--;
             _isHit = true;
             _anim.SetTrigger("Hit");
             _anim.SetBool("InCombat", true);

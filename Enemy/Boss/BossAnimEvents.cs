@@ -37,4 +37,9 @@ public class BossAnimEvents : MonoBehaviour
     {
         BossPhase1Controller.instance.Swallow();
     }
+
+    public void ReleaseCrow() 
+    {
+        BossPhase1Controller.instance.ReleaseTheCrow();
+    }
 }
