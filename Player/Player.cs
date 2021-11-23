@@ -337,6 +337,8 @@ public class Player : MonoBehaviour, IDamageable
             int randNum = Random.Range(1, AudioManager.instance.sfx.Length - 1);
 
             AudioManager.instance.PlaySoundEffects(randNum);
+            _anim.SetBool("MouthOpen", true);
+            _anim.SetInteger("FaceAnim", randNum);
             if (_health < 1)
             {
                 UIManager.instance.LoadNextLevel(UIManager.instance.levelToLoad);
@@ -484,6 +486,14 @@ public class Player : MonoBehaviour, IDamageable
     void Attack() 
     {
         _anim.SetTrigger("Attack");
+    }
+
+    public void speak(int animNum)
+    {
+        _anim.SetBool("MouthOpen", true);
+        _anim.SetInteger("FaceAnim", animNum);
+
+        AudioManager.instance.PlaySoundEffects(animNum);
     }
 
     void OnTriggerEnter(Collider _other)
