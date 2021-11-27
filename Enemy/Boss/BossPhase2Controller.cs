@@ -8,7 +8,7 @@ public class BossPhase2Controller : MonoBehaviour
 
     public Animator anim;
 
-    public GameObject victoryZone;
+    public GameObject victoryZone, playerCaughtScene;
 
     public float exitRevealTime;
 
@@ -38,7 +38,7 @@ public class BossPhase2Controller : MonoBehaviour
 
     void Update()
     {
-        /*if (GameManager.instance.isRespawning)
+        /*if (GameManager.instance)
         {
             currentPhase = BossPhase.Intro;
 
@@ -57,7 +57,17 @@ public class BossPhase2Controller : MonoBehaviour
         }*/
     }
 
+    public void Kill()
+    {
 
+        playerCaughtScene.SetActive(true);
+    }
+
+    public void Swallow()
+    {
+      
+        UIManager.instance.LoadNextLevel(0);
+    }
 
 
     public void DamageBoss()
@@ -97,48 +107,52 @@ public class BossPhase2Controller : MonoBehaviour
                 break;
 
         }
+    }
 
-        IEnumerator Blink(float time) 
+    private WaitForSeconds blinkTimer = new WaitForSeconds(.05f);
+
+    IEnumerator Blink(float time) 
+    {
+        bool isBlinking = false;
+
+        canBeHit = false;
+
+        while(time > 0)
         {
-            bool isBlinking = false;
+            isBlinking = !isBlinking;
 
-            canBeHit = false;
-
-            while(time > 0)
+            if (isBlinking)
             {
-                isBlinking = !isBlinking;
-
-                if (isBlinking)
-                {
-                    mr.materials[2].color = Color.red;
-                    lightBulb.color = Color.red;
-                }
-                else 
-                {
-                    mr.materials[2].color = Color.green;
-                    lightBulb.color = Color.green;
-                }
+                mr.materials[2].color = Color.red;
+                lightBulb.color = Color.red;
+            }
+            else 
+            {
+                mr.materials[2].color = Color.green;
+                lightBulb.color = Color.green;
+            }
                 
-                time-= .1f;
+            time-= .1f;
 
-                yield return new WaitForSeconds(.05f);
-            }
-
-            canBeHit = true;
+            yield return blinkTimer;
         }
 
-        IEnumerator EndBoss()
+        canBeHit = true;
+    }
+    
+    private WaitForSeconds exitTimer = new WaitForSeconds(0.05f);
+
+    IEnumerator EndBoss()
+    {
+        //AudioManager.instace.PlaySoundEffects(bossHit);
+        //AudioManager.instace.PlaySoundEffects(bossDeathShout);
+        GiantBird[] crows = FindObjectsOfType<GiantBird>();
+        foreach (GiantBird crow in crows) 
         {
-            //AudioManager.instace.PlaySoundEffects(bossHit);
-            //AudioManager.instace.PlaySoundEffects(bossDeathShout);
-            GiantBird[] crows = FindObjectsOfType<GiantBird>();
-            foreach (GiantBird crow in crows) 
-            {
-                crow.Damage(1);
-            }
-            AudioManager.instance.PlayMusic(AudioManager.instance.levelMusicToPlay);
-            yield return new WaitForSeconds(exitRevealTime);
-            //victoryZone.SetActive(true);
+            crow.Damage(1);
         }
+        AudioManager.instance.PlayMusic(AudioManager.instance.levelMusicToPlay);
+        yield return exitTimer;
+        //victoryZone.SetActive(true);
     }
 }

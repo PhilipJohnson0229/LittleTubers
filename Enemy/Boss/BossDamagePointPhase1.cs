@@ -13,8 +13,9 @@ public class BossDamagePointPhase1 : MonoBehaviour
             if (BossPhase1Controller.instance.canBeHit == true)
             {
                 BossPhase1Controller.instance.playerHurtMe = true;
-                BossPhase1Controller.instance.DamageBoss();
-                
+                BossPhase1Controller.instance.DamageBoss(); 
+                BossPhase1Controller.instance.FaceCamera();
+
                 Player player = other.gameObject.GetComponentInParent<Player>();
 
                 player.EnemyJump();

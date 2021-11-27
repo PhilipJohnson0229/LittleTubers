@@ -12,7 +12,7 @@ public class BossDamagePoint : MonoBehaviour
             if (BossPhase2Controller.instance.canBeHit == true)
             {
                 BossPhase2Controller.instance.DamageBoss();
-
+               
                 Player player = other.gameObject.GetComponentInParent<Player>();
 
                 player.EnemyJump();

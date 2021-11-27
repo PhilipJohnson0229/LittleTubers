@@ -225,6 +225,14 @@ public class BossPhase1Controller : MonoBehaviour
         CheckPhase();  
     }
 
+    public void FaceCamera() 
+    {
+        Debug.Log("Smile for the camera");
+        Vector3 facing = playerModel.localEulerAngles;
+        facing.y = 90.0f;
+        playerModel.localEulerAngles = facing;
+    }
+
     public void ChangeTarget() 
     {
         
@@ -301,9 +309,10 @@ public class BossPhase1Controller : MonoBehaviour
 
             yield return new WaitForSeconds(.05f);
         }
-
-       
     }
+
+    //this is called caching our waitforseconds to lower ower data allocation instead of creating a new object each frame
+    private WaitForSeconds _yieldTime = new WaitForSeconds(0.1f);
 
     IEnumerator EndBoss()
     {
@@ -314,7 +323,7 @@ public class BossPhase1Controller : MonoBehaviour
         canBeHit = false;
         anim.SetBool("isDead", true);
         anim.SetBool("Phase3", false);
-        yield return new WaitForSeconds(exitRevealTime);
+        yield return _yieldTime;
         //crowToSpawn.SetActive(false);
         phase2Boss.SetActive(true);
         Destroy(this.gameObject);

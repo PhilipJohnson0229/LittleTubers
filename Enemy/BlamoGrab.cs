@@ -5,6 +5,7 @@ using UnityEngine;
 public class BlamoGrab : MonoBehaviour
 {
     public Blamo blamo;
+
     void OnTriggerEnter(Collider _other)
     {
         if (_other.tag == "Player") 
@@ -16,5 +17,6 @@ public class BlamoGrab : MonoBehaviour
             }
         }
     }
-   
+
 }
+

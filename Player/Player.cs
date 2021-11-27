@@ -291,7 +291,7 @@ public class Player : MonoBehaviour, IDamageable
 
             yield return null;
         }
-        transform.position = new Vector3(-0.005729993f, transform.position.y, transform.position.z);
+        transform.position = new Vector3(0f, transform.position.y, transform.position.z);
         canBeHurt = true;
         isKnocking = false;
         playerMat.color = playerColor;
@@ -355,6 +355,13 @@ public class Player : MonoBehaviour, IDamageable
     }
 
     public void BossEnsnare(BossPhase1Controller blamo)
+    {
+        blamo.Kill();
+
+        Destroy(this.gameObject);
+    }
+
+    public void Boss2Ensnare(BossPhase2Controller blamo)
     {
         blamo.Kill();
 
@@ -508,7 +515,7 @@ public class Player : MonoBehaviour, IDamageable
         }
     }
 
-    /* private void OnControllerColliderHit(ControllerColliderHit _hit)
+     private void OnControllerColliderHit(ControllerColliderHit _hit)
    {
        if (_hit.transform.tag == "Moving Box") 
        {
@@ -521,5 +528,5 @@ public class Player : MonoBehaviour, IDamageable
                _box.velocity = _pushDirection * _pushPower;
            }
        }
-   }*/
+   }
 }
