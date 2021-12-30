@@ -12,7 +12,10 @@ public class GiantBird : Enemy, IDamageable
 
     public GameObject projectile;
 
-    public GameObject deathEffect;
+    public GameObject deathEffect, custscene;
+
+    public delegate void onDefeated();
+    public static onDefeated birdDefeated;
 
     public int health
     {
@@ -27,17 +30,18 @@ public class GiantBird : Enemy, IDamageable
         rb = GetComponent<Rigidbody>();
         health = base._health;
         _currentTarget = _pointA.position;
+        birdDefeated += Defeat;
     }
 
     public override void Movement()
     {
         base.Movement();
 
-        if (bombTime > 0) 
+        if (bombTime > 0)
         {
             bombTime -= Time.deltaTime;
 
-            if (bombTime <= 0) 
+            if (bombTime <= 0)
             {
                 bombTime = btSet;
 
@@ -48,7 +52,7 @@ public class GiantBird : Enemy, IDamageable
     public void Damage(int amount)
     {
         health--;
-
+        
         if (health < 1)
         {
             _anim.SetTrigger("Death");
@@ -66,7 +70,7 @@ public class GiantBird : Enemy, IDamageable
         }
     }
 
-    void BombsAway() 
+    void BombsAway()
     {
         GameObject bomb = Instantiate(projectile, bombSalvo.position, Quaternion.identity);
     }
@@ -79,15 +83,33 @@ public class GiantBird : Enemy, IDamageable
 
             Player player = other.GetComponentInParent<Player>();
 
-            if (player != null) 
+            if (player != null)
             {
                 player.EnemyJump();
+                player.speak(Mathf.RoundToInt(Random.Range(19, 22)));
             }
         }
 
-        if (other.tag == "Ground") 
+        if (other.tag == "Ground")
         {
             Instantiate(deathEffect, transform.position, Quaternion.identity);
+        }
+
+        if (other.tag == "Moving Box")
+        {
+            Damage(10);
+            birdDefeated();
+
+        }
+    }
+
+    void Defeat() 
+    {
+        if (custscene != null) 
+        {
+           
+            custscene.SetActive(true);
+            Destroy(gameObject);
         }
     }
 }

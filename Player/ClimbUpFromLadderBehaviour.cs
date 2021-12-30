@@ -19,7 +19,7 @@ public class ClimbUpFromLadderBehaviour : StateMachineBehaviour
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        Debug.Log("Trying to enter idle from ladder climb");
+        
         Player _player = animator.gameObject.transform.GetComponentInParent<Player>();
 
         if (_player != null)

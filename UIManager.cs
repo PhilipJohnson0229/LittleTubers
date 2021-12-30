@@ -21,27 +21,43 @@ public class UIManager : MonoBehaviour
     }
 
     [SerializeField]
-    private Text _coinText, _livesText, _notifText, _coinCount;
+    private Text _coinText, _notifText, _coinCount;
 
-    public Image _selection;
+    public Image _selection, camFade, healthImage;
 
-    public Image camFade;
+    public Sprite[] lives;
 
     public int levelToLoad;
 
     private void Awake()
     {
         _instance = this;
+       
+    }
+
+    private void Start()
+    {
+        if (GameManager.instance._inHell)
+        {
+            healthImage.enabled = false;
+            _coinText.enabled = true;
+        }
     }
 
     public void UpdateCoins(int _coins) 
     {
-        _coinText.text = "Coins: " + _coins.ToString();
+        if (_coinText.isActiveAndEnabled) 
+        {
+            _coinText.text = "Coins: " + _coins.ToString();
+        }
     }
 
-    public void UpdateLives(int _lives) 
+    public void UpdateLives(int _lives)
     {
-        _livesText.text = "Health: " + _lives.ToString();
+        if (healthImage.isActiveAndEnabled)
+        {
+            healthImage.sprite = lives[_lives]; 
+        }
     }
 
     public void Notification(string _message) 
@@ -70,6 +86,7 @@ public class UIManager : MonoBehaviour
         }    
     }
 
+    private WaitForSeconds fadeTime = new WaitForSeconds(.1f);
     IEnumerator FadeToNextLevel(int level) 
     {
         float camFadeTarget = 1f;
@@ -80,7 +97,7 @@ public class UIManager : MonoBehaviour
             camFade.color = tempColor;
 
 
-            yield return new WaitForSeconds(.01f);
+            yield return fadeTime;
         }
 
         SceneManager.LoadScene(level);

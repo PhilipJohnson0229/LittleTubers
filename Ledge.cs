@@ -13,11 +13,12 @@ public class Ledge : MonoBehaviour
     void OnTriggerEnter(Collider _other)
     {
         //_targetPosition = new Vector3(-0.02f, 73.3638f, 123.251f);
-
-        if (_other.CompareTag("Ledge_Grab_Checker"))
+       
+        if (_other.tag == "Ledge_Grab_Checker")
         {
+            
             //try and grab the character controller
-            player = _other.transform.parent.GetComponent<Player>();
+            player = _other.transform.parent.GetComponentInParent<Player>();
            
             if (player != null)
             {

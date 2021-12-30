@@ -10,8 +10,9 @@ public class AudioManager : MonoBehaviour
 
     public AudioSource[] musicTracks;
     public AudioSource[] sfx;
+    
 
-    public int levelMusicToPlay;
+    public int levelMusicToPlay, jokeIndex, tutorialIndex, enemyVictoryIndex;
 
     public AudioMixerGroup musicMixer, sfxMixer;
     //private int currentTrack;
@@ -26,15 +27,6 @@ public class AudioManager : MonoBehaviour
         PlayMusic(levelMusicToPlay);
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-
-                
-            PlaySoundEffects(Random.Range(0, 9));
-        }
-    }
 
     public void PlayMusic(int musicToPlay)
     {
@@ -47,6 +39,7 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySoundEffects(int sfxToPlay)
     {
+        
         sfx[sfxToPlay].Play();
     }
 
@@ -59,6 +52,8 @@ public class AudioManager : MonoBehaviour
     {
         //sfxMixer.audioMixer.SetFloat("SFXVol", UIManager.instance.sfxVolSlider.value);
     }
+
+   
 }
 
 

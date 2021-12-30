@@ -4,29 +4,19 @@ using UnityEngine;
 
 public class Attack : MonoBehaviour
 {
-    [SerializeField]
-    private bool _canHit = true;
+  
 
     public int amount;
 
     void OnTriggerEnter(Collider _other)
     {
-        IDamageable hit = _other.GetComponent<IDamageable>(); 
-        if (hit != null) 
+        if (_other.tag == "Player") 
         {
-            if (_canHit) 
+            IDamageable hit = _other.GetComponent<IDamageable>();
+            if (hit != null)
             {
-                hit.Damage(amount);
-
-                _canHit = false;
-                StartCoroutine(AttackCooldown());
-            }  
+                hit.Damage(amount);             
+            }
         }
-    }
-    IEnumerator AttackCooldown() 
-    {  
-        yield return new WaitForSeconds(0.2f);
-        
-        _canHit = true;
     }
 }

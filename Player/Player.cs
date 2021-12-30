@@ -19,7 +19,7 @@ public class Player : MonoBehaviour, IDamageable
     private int _coin;
 
     [SerializeField]
-    private int _health = 3;
+    private int _health, maxHealth = 6;
 
     [SerializeField]
     private Vector3 _direction;
@@ -62,17 +62,20 @@ public class Player : MonoBehaviour, IDamageable
     [SerializeField]
     private float _pushPower = 2.0f;
 
+    [SerializeField]
+    private BlockedPathEvent currentObstacle;
+
+    [SerializeField]
+    private Transform playerModel;
     public int health { get; set; }
 
     public float dataToTrack;
 
     public CinemachineVirtualCamera vcam;
 
-    public GameObject bossHurtBox;
+    public GameObject bossHurtBox, ragdoll, kniferRagdoll, kniferRagdollDrop, currentKnifer;
 
-    public bool isKnocking;
-
-    public bool canBeHurt;
+    public bool isKnocking, canPickUpEventItem, canDropEventItem, carryingEventItem, canBeHurt;
 
     public Material playerMat;
 
@@ -90,7 +93,7 @@ public class Player : MonoBehaviour, IDamageable
         _airBody = GetComponent<Rigidbody>();
         playerMat.color = playerColor;
         canBeHurt = true;
-
+        _health = maxHealth;
         if (_airCollider != null) { _airCollider.enabled = false; }
         if (_airBody != null) { _airBody.detectCollisions = false; }
         
@@ -137,11 +140,38 @@ public class Player : MonoBehaviour, IDamageable
                 }
             }
         }
+
+        if (canPickUpEventItem && !carryingEventItem) 
+        {
+            if (Input.GetKey(KeyCode.E)) 
+            {
+                PickUpEventItem();
+                canPickUpEventItem = false;
+                carryingEventItem = true;
+            }
+        }
+
+        if (canDropEventItem && carryingEventItem) 
+        {
+            if (Input.GetKey(KeyCode.E))
+            {
+                canDropEventItem = false;
+                DropOffEventItem();
+            }
+        }
+
+        if (carryingEventItem) 
+        {
+            if (Input.GetKey(KeyCode.Space))
+            {
+                DropEventItem();
+            }
+        }
     }
 
     void CalculateMovement() 
     {
-        Vector3 _facing = transform.localEulerAngles;
+        Vector3 _facing = playerModel.localEulerAngles;
 
         //if grounded, we can jump
         if (_characterController.isGrounded && !isKnocking)
@@ -155,7 +185,7 @@ public class Player : MonoBehaviour, IDamageable
             if (_h != 0 && !_onLadder)
             {
                 _facing.y = _direction.z > 0 ? 40 : 140;
-                transform.localEulerAngles = _facing;
+                playerModel.localEulerAngles = _facing;
             }
 
             //combining projects
@@ -209,7 +239,7 @@ public class Player : MonoBehaviour, IDamageable
                 if (_h != 0)
                 {
                     _facing.y = _direction.z > 0 ? 40 : 140;
-                    transform.localEulerAngles = _facing;
+                    playerModel.localEulerAngles = _facing;
 
                     _anim.SetBool("Grounded", false);
                 }
@@ -302,6 +332,7 @@ public class Player : MonoBehaviour, IDamageable
     {
         _direction.y = 0f;
         _direction.y += _jumpForce;
+        _direction.x = 0;
         _isJumping = true;
         _anim.SetBool("Jump", true);
     }
@@ -309,7 +340,8 @@ public class Player : MonoBehaviour, IDamageable
     public void EnemyJump()
     {
         _direction.y = 0f;
-        _direction.y += _jumpForce * .5f;
+        _direction.y += _jumpForce * .3f;
+        _direction.x = 0;
         _isJumping = true;
         _anim.SetBool("Jump", true);
     }
@@ -334,17 +366,23 @@ public class Player : MonoBehaviour, IDamageable
             StartCoroutine(Blink(knockBackCounter));
             UIManager.instance.UpdateLives(_health);
 
-            int randNum = Random.Range(1, AudioManager.instance.sfx.Length - 1);
+            int randNum = Random.Range(1,3);
 
             AudioManager.instance.PlaySoundEffects(randNum);
             _anim.SetBool("MouthOpen", true);
             _anim.SetInteger("FaceAnim", randNum);
             if (_health < 1)
             {
-                UIManager.instance.LoadNextLevel(UIManager.instance.levelToLoad);
+                UIManager.instance.LoadNextLevel(7);
             }
         }
         
+    }
+
+    public void Heal() 
+    {
+        _health = maxHealth;
+        UIManager.instance.UpdateLives(_health);
     }
 
     public void Ensnare(Blamo blamo) 
@@ -375,6 +413,7 @@ public class Player : MonoBehaviour, IDamageable
 
     public void GrabLedge(Vector3 _targetPos, Ledge _currentLedge)
     {
+        Debug.Log("grabbing ledge?");
         _characterController.enabled = false;
         _isJumping = false;
         _anim.SetBool("Grab_Ledge", true);
@@ -418,9 +457,9 @@ public class Player : MonoBehaviour, IDamageable
 
         //snap player to position on ladder
         transform.position = _targetPos;
-        Vector3 _facing = transform.localEulerAngles;
+        Vector3 _facing = playerModel.localEulerAngles;
         _facing.y = -90f;
-        transform.localEulerAngles = _facing;
+        playerModel.localEulerAngles = _facing;
 
         //play ladder climbing animation
         _nearLadder = false;
@@ -473,7 +512,7 @@ public class Player : MonoBehaviour, IDamageable
 
     public void StepOffLadder(bool _isTopExit)
     {
-        Debug.Log("trying to step off the ladder");
+       
 
         if (_isTopExit)
         {
@@ -497,10 +536,67 @@ public class Player : MonoBehaviour, IDamageable
 
     public void speak(int animNum)
     {
-        _anim.SetBool("MouthOpen", true);
-        _anim.SetInteger("FaceAnim", animNum);
+        if (_anim.GetBool("MouthOpen") == false) 
+        {
+            _anim.SetBool("MouthOpen", true);
+            _anim.SetInteger("FaceAnim", animNum);
 
-        AudioManager.instance.PlaySoundEffects(animNum);
+            AudioManager.instance.PlaySoundEffects(animNum);
+        }
+        else { return; }
+    }
+
+    public void SetCurrentObstacle(BlockedPathEvent _currentObstacle) 
+    {
+        currentObstacle = _currentObstacle;
+    }
+
+    public void PickUpEventItem() 
+    {
+        kniferRagdoll.SetActive(true);
+
+        if (currentKnifer != null) 
+        {
+            Destroy(currentKnifer);
+        }
+
+        transform.position = new Vector3(0f, transform.position.y, transform.position.z);
+        //have the animator play a raised arm animation and mask out the legs
+    }
+
+    public void DropOffEventItem()
+    {
+        kniferRagdoll.SetActive(false);
+
+        if (currentObstacle != null)
+        {
+            Animator currentObstAnim = currentObstacle.GetComponent<Animator>();
+            currentObstacle.ActivateProp();
+            carryingEventItem = false;
+            if (currentObstAnim != null)
+            {
+                currentObstAnim.SetBool("Activate", true);
+            }
+        }
+
+        transform.position = new Vector3(0f, transform.position.y, transform.position.z);
+        //have the animator play a raised arm animation and mask out the legs
+    }
+
+    void DropEventItem() 
+    {
+        carryingEventItem = false;
+
+        if (facingLeft)
+        {
+            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z - 2), Quaternion.identity);
+        }
+        else 
+        {
+            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z + 2), Quaternion.identity);
+        }
+        
+        kniferRagdoll.SetActive(false);
     }
 
     void OnTriggerEnter(Collider _other)
@@ -513,6 +609,38 @@ public class Player : MonoBehaviour, IDamageable
         {
             ExitLadder(false);
         }
+
+        if (_other.tag == "KillerCar") 
+        {
+            Damage(2);
+            #region attempted ragdoll
+
+            /*Rigidbody[] rigidbodies = ragdoll.GetComponentsInChildren<Rigidbody>();
+
+            ragdoll.transform.position = this.transform.position;
+
+            ragdoll.SetActive(true);
+
+            foreach (Rigidbody rb in rigidbodies)
+            {
+                rb.AddExplosionForce(10, ragdoll.transform.position, 50f, 70f, ForceMode.Impulse);
+              
+            }
+            //ragdoll.AddTorque(new Vector3(5f, 0, 0), ForceMode.Impulse);
+            Destroy(gameObject);
+            UIManager.instance.LoadNextLevel(0);*/
+            #endregion
+        }
+    }
+    
+    public void Freeze()
+    {
+        _anim.SetBool("CanMove", true);
+    }
+
+    public void Unfreeze() 
+    {
+        _anim.SetBool("CanMove", false);
     }
 
      private void OnControllerColliderHit(ControllerColliderHit _hit)

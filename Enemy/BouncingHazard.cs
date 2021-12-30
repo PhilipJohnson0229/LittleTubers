@@ -28,7 +28,8 @@ public class BouncingHazard : MonoBehaviour
             if (player != null) 
             {
                 player.Damage(1);
-                health--;
+                Instantiate(deathEffect, this.transform.position, Quaternion.identity);
+                Destroy(this.gameObject, .3f);
             }
         }
 

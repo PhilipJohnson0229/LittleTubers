@@ -59,7 +59,6 @@ public class BossPhase2Controller : MonoBehaviour
 
     public void Kill()
     {
-
         playerCaughtScene.SetActive(true);
     }
 

@@ -32,7 +32,7 @@ public class BossPhase1Controller : MonoBehaviour
 
     public GameObject phase2Boss, deathDUmmy, crowDummy;
 
-    public GameObject crowToSpawn;
+    public GameObject crowToSpawn, playerDeathScene;
 
 
     private void Awake()
@@ -195,8 +195,6 @@ public class BossPhase1Controller : MonoBehaviour
         anim.SetBool("Attack", true);
     }
 
-  
-
     //we will rely on the animation to subtract health since ontriggerenter sucks
     public void SubtractHealth() 
     {
@@ -269,14 +267,15 @@ public class BossPhase1Controller : MonoBehaviour
 
     public void Kill()
     {
-        deathDUmmy.SetActive(true);
-        anim.SetBool("Kill", true);
+        FaceCamera();
+        trackedTarget = null;
+        
     }
 
     public void Swallow()
     {
         deathDUmmy.SetActive(false);
-        UIManager.instance.LoadNextLevel(0);
+        playerDeathScene.SetActive(true);
     }
 
     public void ReleaseTheCrow() 

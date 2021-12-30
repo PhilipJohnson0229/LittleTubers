@@ -10,8 +10,9 @@ public class HurtCollider : MonoBehaviour
         if (other.tag == "PlayerHurtBox")
         {
             
-            if (berserker != null)
+            if (berserker != null && !berserker.IsDead())
             {
+
                 berserker.Damage(1);
 
                 if (berserker.ReturnPlayer() != null) 

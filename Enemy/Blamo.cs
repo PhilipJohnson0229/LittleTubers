@@ -47,7 +47,7 @@ public class Blamo : Enemy
     public float gravity = 5.0f;
 
     [SerializeField]
-    protected GameObject groundChecker;
+    protected GameObject groundChecker, ragdollEffect;
   
     public GameObject floorChecker;
 
@@ -346,28 +346,22 @@ public class Blamo : Enemy
         deathDUmmy.SetActive(false);
         UIManager.instance.LoadNextLevel(1);
     }
-    /* public void Damage()
-     {
-         if (health < 1)
-         {
-             Vector3 _offset = new Vector3(0, 0.5f, 0);
-             _anim.SetTrigger("Death");
-             _isDead = true;
-             //casting
-             GameObject _coinDrop = Instantiate(_coin, this.transform.localPosition + _offset, Quaternion.identity) as GameObject;
-             //here we would put code to handle assigning multiple coins if we want to go that route
-             _coinDrop.GetComponent<Coin>()._amount = base._coinsAmount;
-         }
-         else
-         {
-             if (_isDead == true) { return; }
-             health--;
-             _isHit = true;
-             _anim.SetTrigger("Hit");
-             _anim.SetBool("InCombat", true);
-             UIManager _UIManager = GameObject.Find("UI Manager").GetComponent<UIManager>();
-             _UIManager.Notification(this.name + " was damaged!");
-         }
-     }*/
+
+    public void Defeat() 
+    {
+        Rigidbody[] rigidbodies = ragdollEffect.GetComponentsInChildren<Rigidbody>();
+       
+        ragdollEffect.transform.position = this.transform.position;
+        
+        ragdollEffect.SetActive(true);
+
+        foreach (Rigidbody rb in rigidbodies)
+        {
+            rb.AddExplosionForce(15, ragdollEffect.transform.position, 50f, 70f, ForceMode.Impulse);
+        }
+
+        Destroy(gameObject);
+    }
+
 
 }

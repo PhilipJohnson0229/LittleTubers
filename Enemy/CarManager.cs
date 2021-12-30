@@ -8,44 +8,81 @@ public class CarManager : MonoBehaviour
 
     public Transform[] spawnPoints;
 
-    public GameObject carPrefab;
+    public GameObject carPrefab, defeatedPrefab;
 
-    public bool carIsActive = false;
+    private bool carIsActive = false;
+
+    private bool carHasCrashed;
+
+    [SerializeField]
+    private bool playerIsCloseEnough;
+
+    [SerializeField]
+    private float playerDistance;
 
     public float countDownTimer, countDownSetTime;
-
     
+    [SerializeField]
+    private Player thePlayer;
+
+    public delegate void onDefeated();
+    public static onDefeated carDefeated;
+
+
+
 
     public Quaternion carRot;
     private void OnEnable()
     {
         countDownTimer = countDownSetTime;
-
+        carDefeated += ClearPath;
         SpawnCar(Random.Range(0, spawnPoints.Length - 1));
+    }
+
+    private void Start()
+    {
+        thePlayer = GameObject.FindObjectOfType<Player>();    
+
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (countDownTimer > 0 && !carIsActive) 
-        {
-            countDownTimer -= Time.deltaTime;
 
-            if (countDownTimer <= 0)
+     
+        if (!carHasCrashed || thePlayer != null) 
+        {
+            playerDistance = Mathf.Abs(this.transform.position.z - thePlayer.transform.position.z);
+
+
+            if (playerDistance <= 6 && playerDistance < 7)
             {
-                countDownTimer = countDownSetTime;
-                
-                SpawnCar(Random.Range(0, spawnPoints.Length - 1));
+                playerIsCloseEnough = true;
             }
-        }
+            else { playerIsCloseEnough = false; }
 
-        if (carIsActive)
-        {
-            trafficLight.color = Color.green;
-        }
-        else 
-        {
-            trafficLight.color = Color.red;
+
+            if (playerIsCloseEnough && countDownTimer > 0 && !carIsActive)
+            {
+                countDownTimer -= Time.deltaTime;
+
+                if (countDownTimer <= 0)
+                {
+                    countDownTimer = countDownSetTime;
+
+                    SpawnCar(Random.Range(0, spawnPoints.Length - 1));
+                }
+            }
+
+            if (carIsActive)
+            {
+                trafficLight.color = Color.green;
+            }
+            else
+            {
+                trafficLight.color = Color.red;
+            }
         }
     }
 
@@ -62,5 +99,11 @@ public class CarManager : MonoBehaviour
             Destroy(other.gameObject);
             carIsActive = false;
         }
+    }
+
+    public void ClearPath() 
+    {
+        defeatedPrefab.SetActive(true);
+        carHasCrashed = true;
     }
 }

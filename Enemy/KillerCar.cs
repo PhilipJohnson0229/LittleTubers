@@ -2,22 +2,39 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class KillerCar : MonoBehaviour
+public class KillerCar : Enemy
 {
-    public Rigidbody rb;
+    private Rigidbody rb;
     public int carHorn;
     public float speed;
     public GameObject[] carModels;
+    [SerializeField]
+    private float playerDistance;
+    bool honkedHorn = false;
+
     private void OnEnable()
     {
+        rb = GetComponent<Rigidbody>();
         SetCar();
-        AudioManager.instance.PlaySoundEffects(carHorn);
+        
     }
+   
 
     // Update is called once per frame
     void Update()
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
+
+        playerDistance = transform.position.z - _player.transform.position.z;
+        if (!honkedHorn) 
+        {
+            if (Mathf.Abs(playerDistance) < 2)
+            {
+                AudioManager.instance.PlaySoundEffects(carHorn);
+                honkedHorn = true;
+            }
+        }
+        
     }
 
     void SetCar() 
@@ -43,5 +60,21 @@ public class KillerCar : MonoBehaviour
                 player.Damage(1);
             }
         }
+
+        if (other.tag == "HellReaper")
+        {
+            Blamo blamo = other.GetComponent<Blamo>();
+
+            if (blamo != null)
+            {
+                
+                CarManager.carDefeated += blamo.Defeat;
+                CarManager.carDefeated();
+
+                Destroy(gameObject);
+            }
+        }
     }
+
+  
 }

@@ -16,10 +16,13 @@ public class BirdActivator : MonoBehaviour
 
             if (birdIndex == birdEnemy.Length - 1) 
             {
-                Destroy(this.gameObject);
+                other.gameObject.SetActive(false);
+                this.gameObject.SetActive(false);
             }
 
             birdIndex++;
         }
     }
+
+
 }

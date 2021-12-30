@@ -13,16 +13,19 @@ public class Berserker : Enemy, IDamageable
 
     public Transform playerModel;
 
-    public float h;
+    public GameObject ragdoll, hurtbox;
+
+    private float h;
 
     private Rigidbody rb;
 
     public Material playerMat;
 
-    public Color playerColor;
+    private Color playerColor;
+
+
     public int health { get; set; }
 
-    public int useThisHealth;
     public override void Init()
     {
         base.Init();
@@ -38,65 +41,109 @@ public class Berserker : Enemy, IDamageable
 
         if (Mathf.Abs(_direction.z) < 7)
         {
+            
             playerIsCloseEnough = true;
             wakingUp = false;
             _anim.SetBool("Wake", false);
+            if (Mathf.Abs(_direction.z) < 1)
+            {
+                _anim.SetBool("Attacking", true);
+
+            }
+            else if (Mathf.Abs(_direction.z) > 1)
+            {
+
+                _anim.SetBool("Attacking", false);
+            }
+
         }
-        else { playerIsCloseEnough = false; }
+        else
+        {
+            _anim.SetBool("Attacking", false);
+            playerIsCloseEnough = false;
+        }
 
 
-        if (_player != null && playerIsCloseEnough && !_isDead && !wakingUp &&_anim.GetBool("canMove"))
+        if (_player != null && !IsDead() && !wakingUp && CanMove() && !IsHurt())
         {
             Movement();
             _anim.SetBool("Moving", true);
         }
-        else 
+        else
         {
             _anim.SetBool("Moving", false);
             return;
         }
+
+        if (IsAntiAir() || IsHurt() || IsDead())
+        {
+            hurtbox.SetActive(false);
+        }
+        else { hurtbox.SetActive(true); }
     }
 
     public override void Movement()
     {
 
         Vector3 _facing = transform.eulerAngles;
-        Vector3 velocity = new Vector3(0, 0, h) * _speed;
+        Vector3 velocity = new Vector3(h, 0, 0) * _speed;
 
-
-        rb.AddForce(velocity * Time.deltaTime);
-       
-
-        if (_direction.z < 0)
+        if (!IsAttacking()) 
         {
-            _facing.y = 0;
-            playerModel.localEulerAngles = _facing;
-            h = 1;
-        } else if (_direction.z > 0)
+           transform.Translate(velocity * Time.deltaTime);
+        }
+        else
         {
-            _facing.y = 180f;
-            playerModel.localEulerAngles = _facing;
-            h = -1;
+            rb.velocity = Vector3.zero;
         }
 
-        
+        if (!_isDead) 
+        {
+            if (_direction.z < 0)
+            {
+                _facing.y = -60f;
+                playerModel.localEulerAngles = _facing;
+                h = -1;
+            }
+            else if (_direction.z > 0)
+            {
+                _facing.y = 60f;
+                playerModel.localEulerAngles = _facing;
+                h = 1;
+            }
+        }
     }
 
     public void Damage(int amount)
     {
-        if (!_isDead) 
+        if (!WakingUp() && !IsHurt()) 
         {
-            useThisHealth--;
-
-            StartCoroutine(Blink(1.5f));
-
-            if (useThisHealth <= 0)
+            if (!IsDead())
             {
-                useThisHealth = 0;
-                _isDead = true;
-                _anim.SetBool("Dead", true);
+              
+                _health--;
+                _anim.SetTrigger("Hurt");
 
-                Destroy(this.gameObject, 3f);
+                StartCoroutine(Blink(1.5f));
+
+                if (_health <= 0)
+                {
+                    _health = 0;
+                    _isDead = true;
+                    
+                    Quaternion lastRotation = playerModel.rotation;
+                    playerModel.gameObject.SetActive(false);
+
+                    GameObject deathEffect = Instantiate(ragdoll, transform.position, lastRotation);
+                    if (_coin != null) 
+                    {
+                        GameObject droppedItem = Instantiate(_coin, this.transform.position, Quaternion.Euler(new Vector3(0f, 90f, 0f)));
+                    }
+   
+                    deathEffect.transform.parent = this.transform;
+                    Destroy(gameObject, 5f);
+                    
+                }
             }
         }
     }
@@ -135,15 +182,34 @@ public class Berserker : Enemy, IDamageable
         return _player;
     }
 
-    private void OnTriggerEnter(Collider other)
+    public bool IsDead() 
     {
-        if (other.tag == "Player" && !_isDead) 
-        {
-            if (_player != null) 
-            {
-                _player.Damage(1);
-            }
-        }
+        return _isDead;
+    }
+
+    public bool WakingUp()
+    {
+        return _anim.GetCurrentAnimatorStateInfo(0).IsName("Activate");
+    }
+
+    public bool IsHurt() 
+    {
+        return _anim.GetCurrentAnimatorStateInfo(0).IsName("Hurt");
+    }
+
+    public bool IsAttacking() 
+    {
+        return _anim.GetBool("Attacking");
+    }
+
+    public bool CanMove()
+    {
+        return _anim.GetBool("canMove");
+    }
+
+    public bool IsAntiAir() 
+    {
+        return _anim.GetCurrentAnimatorStateInfo(0).IsName("AntiAir");
     }
 }
 

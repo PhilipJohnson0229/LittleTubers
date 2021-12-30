@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class TalkingActivator : MonoBehaviour
 {
+   
     public int animVoiceIndex;
-
+    public bool useRandom;
+    public int randMin, randMax;
     private void OnTriggerEnter(Collider other)
     {
         if(other.tag == "Player") 
@@ -14,8 +16,23 @@ public class TalkingActivator : MonoBehaviour
 
             if (player != null) 
             {
-                player.speak(animVoiceIndex);
+                if (useRandom) 
+                {
+                    animVoiceIndex = (Random.Range(randMin, randMax));
+                    player.speak(animVoiceIndex);
+                   
+                    Destroy(gameObject);
+                }
+                else 
+                {
+                    player.speak(animVoiceIndex);
+                   
+                    Destroy(gameObject);
+                }
+                
             }
         }
     }
+
+   
 }
