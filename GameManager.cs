@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public GameObject[] activators;
+
+    public int chosenActivator;
     //auto property
     public bool _hasKeyToCastle { get; set; }
 
@@ -28,5 +31,7 @@ public class GameManager : MonoBehaviour
     {
         _instance = this;
     }
+
+  
 
 }

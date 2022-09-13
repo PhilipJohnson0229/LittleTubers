@@ -35,10 +35,6 @@ public class ControlPanel : MonoBehaviour
             if (Input.GetKeyUp(KeyCode.E))
             {
                 lever.GetComponent<Animator>().SetTrigger("Called");
-                if (_player != null) 
-                {
-                    _player.Freeze();
-                }
             }
            
         }

@@ -19,6 +19,7 @@ public class AudioManager : MonoBehaviour
     void Awake()
     {
         instance = this;
+        DontDestroyOnLoad(this.gameObject);
     }
 
     // Update is called once per frame
@@ -39,7 +40,6 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySoundEffects(int sfxToPlay)
     {
-        
         sfx[sfxToPlay].Play();
     }
 

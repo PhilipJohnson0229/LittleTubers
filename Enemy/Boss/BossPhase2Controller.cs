@@ -8,23 +8,28 @@ public class BossPhase2Controller : MonoBehaviour
 
     public Animator anim;
 
-    public GameObject victoryZone, playerCaughtScene;
+    public GameObject victoryZone, playerCaughtScene, walls, destroyWallsPrefab;
 
-    public float exitRevealTime;
+    public float exitRevealTime, movementSpeed;
 
-    public int health = 3;
+    private int health = 3;
 
     public enum BossPhase { Intro, Phase1, Phase2, Phase3, End };
 
     public BossPhase currentPhase = BossPhase.Intro;
 
-    public bool canBeHit = true;
+    private bool canBeHit = true;
 
     public int bossMusic, bossDeath, bossDeathShout, bossHit;
 
     public SkinnedMeshRenderer mr;
 
     public Light lightBulb;
+
+    private Vector3 playerRailPosition;
+
+    private Player player;
+
     private void Awake()
     {
         instance = this;
@@ -34,27 +39,24 @@ public class BossPhase2Controller : MonoBehaviour
     {
         AudioManager.instance.PlayMusic(bossMusic);
         lightBulb.color = Color.green;
+        player = GameObject.FindObjectOfType<Player>();
     }
 
     void Update()
     {
-        /*if (GameManager.instance)
+
+        playerRailPosition.x = transform.position.x;
+        playerRailPosition.y = transform.position.y;
+        playerRailPosition.z = player.transform.position.z;
+
+        if (!anim.GetCurrentAnimatorStateInfo(0).IsName("BossWaitForDamage") && !anim.GetCurrentAnimatorStateInfo(0).IsName("BossEnd"))
         {
-            currentPhase = BossPhase.Intro;
-
-            anim.SetBool("Phase1", false);
-            anim.SetBool("Phase2", false);
-            anim.SetBool("Phase3", false);
-
-            //AudioManager.instace.PlayMusic(AudioManager.instace.levelMusicToPlay);
-
-            gameObject.SetActive(false);
-
-            BossActivator.instance.gameObject.SetActive(true);
-            BossActivator.instance.entrance.SetActive(true);
-
-            //GameManager.instance.isRespawning = false;
-        }*/
+            transform.position = Vector3.Lerp(transform.position, playerRailPosition, movementSpeed * Time.deltaTime);
+        }
+        else 
+        {
+            return;
+        }
     }
 
     public void Kill()
@@ -65,7 +67,7 @@ public class BossPhase2Controller : MonoBehaviour
     public void Swallow()
     {
       
-        UIManager.instance.LoadNextLevel(0);
+       // UIManager.instance.LoadNextLevel(0);
     }
 
 
@@ -152,6 +154,11 @@ public class BossPhase2Controller : MonoBehaviour
         }
         AudioManager.instance.PlayMusic(AudioManager.instance.levelMusicToPlay);
         yield return exitTimer;
-        //victoryZone.SetActive(true);
+        victoryZone.SetActive(true);
+    }
+
+    public bool ReturnHitStatus() 
+    {
+        return canBeHit;
     }
 }

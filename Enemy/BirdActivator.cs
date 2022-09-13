@@ -10,17 +10,22 @@ public class BirdActivator : MonoBehaviour
     {
         if (other.tag == "BirdKey") 
         {
+            other.gameObject.SetActive(false);
             birdEnemy[birdIndex].SetActive(true);
 
-            other.gameObject.SetActive(false);
+            birdEnemy[birdIndex].transform.position = this.transform.position;
 
-            if (birdIndex == birdEnemy.Length - 1) 
+            Enemy enemy = birdEnemy[birdIndex].GetComponent<Enemy>();
+
+            if (enemy != null) 
             {
-                other.gameObject.SetActive(false);
-                this.gameObject.SetActive(false);
+                enemy.Revive();
             }
 
-            birdIndex++;
+            if (birdEnemy.Length > 1) 
+            {
+                birdIndex++;
+            } 
         }
     }
 

@@ -11,8 +11,6 @@ public class Blamo : Enemy
     protected BoxCollider boxCol;
     protected float h = 0;
 
-    public Transform playerModel;
-
     protected float attackDistance = 2f;
     [SerializeField]
     protected float targetDistance;
@@ -33,7 +31,7 @@ public class Blamo : Enemy
 
     [SerializeField]
     private bool movingTowardsJumpPad = false;
- 
+
     [SerializeField]
     private bool jumpingTowardsLedge = false;
 
@@ -48,7 +46,7 @@ public class Blamo : Enemy
 
     [SerializeField]
     protected GameObject groundChecker, ragdollEffect;
-  
+
     public GameObject floorChecker;
 
     [SerializeField]
@@ -63,8 +61,9 @@ public class Blamo : Enemy
     public Transform[] edgeChecker;
     public bool nearEdge;
     Vector3 ledgeDirection;
+    public int laughter;
 
-    public GameObject hitBox;
+    public GameObject hitBox, banishmentEffect;
     public GameObject deathDUmmy;
     public override void Init()
     {
@@ -72,29 +71,37 @@ public class Blamo : Enemy
         health = base._health;
         rb = GetComponent<Rigidbody>();
         boxCol = GetComponent<BoxCollider>();
-        trackedTarget = _player.transform;
+        trackedTarget = player.transform;
         groundChecker.SetActive(false);
         isGrounded = true;
     }
 
     public override void Movement()
     {
-        _direction = transform.localPosition - trackedTarget.localPosition;
+        if (trackedTarget != null)
+        {
+            _direction = transform.position - trackedTarget.position;
+        }
+        else
+        {
+            _direction = Vector3.zero;
+        }
+
         Vector3 _facing = transform.localEulerAngles;
         targetDistance = Mathf.Abs(_direction.z);
-        
+
         Vector3 velocity = new Vector3(0, 0, h) * _speed;
 
-        _anim.SetFloat("Velocity", Mathf.Abs(rb.velocity.z));
+        anim.SetFloat("Velocity", Mathf.Abs(rb.velocity.z));
 
         if (!onLedge)
         {
             //Main movement code
-            if (!closeEnoughToAttack && !jumpingTowardsLedge)
+            if (!closeEnoughToAttack)
             {
                 attacking = false;
-                _anim.SetBool("InCombat", false);
-                if (trackedTarget != null) 
+                anim.SetBool("InCombat", false);
+                if (trackedTarget != null && !anim.GetBool("JumpingForLedge"))
                 {
                     transform.Translate(velocity * Time.deltaTime);
                 }
@@ -102,7 +109,7 @@ public class Blamo : Enemy
             else
             {
                 attacking = true;
-                _anim.SetBool("InCombat", true);
+                anim.SetBool("InCombat", true);
             }
 
             if (!movingTowardsJumpPad && targetDistance <= attackDistance && targetDistance > 0.5f && isGrounded)
@@ -116,11 +123,14 @@ public class Blamo : Enemy
 
             if (movingTowardsJumpPad)
             {
-                trackedTarget = jumpPad.transform;
+                if (jumpPad != null) 
+                {
+                    trackedTarget = jumpPad.transform;
+                }
             }
             else if (!jumpingTowardsLedge)
             {
-                trackedTarget = _player.transform;
+                trackedTarget = player.transform;
             }
 
             if (_direction.z > 0)
@@ -157,8 +167,8 @@ public class Blamo : Enemy
         }
         else { hitBox.SetActive(false); }
 
-        if (justLanded) 
-        {    
+        if (justLanded)
+        {
             rb.useGravity = false;
             isJumping = false;
             jumpingTowardsLedge = false;
@@ -167,7 +177,7 @@ public class Blamo : Enemy
             justLanded = false;
         }
 
-        if (isGrounded) 
+        if (isGrounded)
         {
             groundChecker.SetActive(false);
         }
@@ -176,38 +186,41 @@ public class Blamo : Enemy
         {
             velocity.y -= gravity * Time.deltaTime;
             hitBox.SetActive(false);
-            FloorCheck();
+            StartCoroutine(JumpStall());
+           
         }
-  
+
 
         EdgeCheck();
 
         distanceTracker = targetDistance;
     }
 
-    public void Jump()
+    public void Jump(int jumpSOund, float jumpPower)
     {
-        Vector3 jumpForce = new Vector3(0,8,0);
+        Debug.Log("Entered");
+        Vector3 jumpForce = new Vector3(0, jumpPower, 0);
         rb.velocity += jumpForce;
+        AudioManager.instance.PlaySoundEffects(jumpSOund);
         rb.useGravity = true;
         isJumping = true;
         isGrounded = false;
-        trackedTarget = _player.transform;
-        _anim.SetBool("Grounded", false);
+        trackedTarget = player.transform;
+        anim.SetBool("Grounded", false);
         movingTowardsJumpPad = false;
     }
 
-    public void ChangeLevel() 
+    public void ChangeLevel()
     {
         playerIsAboveMe = true;
     }
 
-    public void ResetLevel() 
+    public void ResetLevel()
     {
         playerIsAboveMe = false;
     }
 
-    public bool HeightLevel() 
+    public bool HeightLevel()
     {
         return playerIsAboveMe;
     }
@@ -217,7 +230,7 @@ public class Blamo : Enemy
         return movingTowardsJumpPad;
     }
 
-    public void SetMovementState() 
+    public void SetMovementState()
     {
         movingTowardsJumpPad = false;
     }
@@ -227,7 +240,7 @@ public class Blamo : Enemy
         return onPlatform;
     }
 
-    public void AssignPlatform() 
+    public void AssignPlatform()
     {
         onPlatform = true;
     }
@@ -252,24 +265,24 @@ public class Blamo : Enemy
 
     public void JumpForLedgeFromPad()
     {
-        _anim.SetBool("JumpingForLedge", true);
-        
+        anim.SetBool("JumpingForLedge", true);
+
         hitBox.SetActive(false);
     }
 
     public void GrabLedge(Vector3 _targetPos, BlamosLedge _currentLedge)
     {
-        
+
         rb.useGravity = false;
         rb.velocity = Vector3.zero;
         isJumping = false;
-        _anim.SetBool("GrabLedge", true);
-        _anim.SetBool("Grounded", false);
-        _anim.SetBool("JumpingForLedge", false);
+        anim.SetBool("GrabLedge", true);
+        anim.SetBool("Grounded", false);
+        anim.SetBool("JumpingForLedge", false);
         onLedge = true;
         transform.position = _targetPos;
         playerModel.localEulerAngles = _currentLedge.GetLedgeDirection();
-      
+
         ledge = _currentLedge;
     }
 
@@ -277,9 +290,9 @@ public class Blamo : Enemy
     {
         transform.position = ledge.GetStandPos();
         isGrounded = true;
-        _anim.SetBool("GrabLedge", false); 
-        _anim.SetBool("Jumping", false);
-        _anim.SetBool("Grounded", true);
+        anim.SetBool("GrabLedge", false);
+        anim.SetBool("Jumping", false);
+        anim.SetBool("Grounded", true);
         jumpingTowardsLedge = false;
         onLedge = false;
         isJumping = false;
@@ -288,12 +301,12 @@ public class Blamo : Enemy
         rb.velocity = Vector3.zero;
         rb.useGravity = false;
         ledge = null;
-        trackedTarget = _player.transform;
+        trackedTarget = player.transform;
     }
 
-    public void EdgeCheck() 
+    public void EdgeCheck()
     {
-        
+
         RaycastHit hit;
         Ray ray = new Ray(floorChecker.transform.position, Vector3.down);
 
@@ -301,15 +314,15 @@ public class Blamo : Enemy
         {
             if (hit.distance > 4)
             {
-                _anim.SetBool("Jumping", true);
-                _anim.SetBool("Grounded", false);
+                anim.SetBool("Jumping", true);
+                anim.SetBool("Grounded", false);
             }
         }
 
     }
 
     public void FloorCheck()
-    { 
+    {
         RaycastHit hit;
 
         Ray ray = new Ray(this.transform.position, Vector3.down);
@@ -323,45 +336,83 @@ public class Blamo : Enemy
         }
     }
 
-    public void SetGroundedState() 
+    public void SetGroundedState()
     {
         justLanded = true;
         isJumping = false;
         attacking = false;
-        _anim.SetBool("Grounded", true);
-        _anim.SetBool("Jumping", false);
+        anim.SetBool("Grounded", true);
+        anim.SetBool("Jumping", false);
         transform.position = new Vector3(transform.position.x, transform.position.y + .1f, transform.position.z);
         rb.velocity = Vector3.zero;
-        
+
     }
 
     public void Kill()
     {
-        deathDUmmy.SetActive(true);
-        _anim.SetBool("Kill", true);
+        
+        if (deathDUmmy != null) 
+        {
+            deathDUmmy.SetActive(true);
+        }
+        anim.SetBool("Kill", true);
+
     }
 
-    public void Swallow() 
+    public void Swallow()
     {
         deathDUmmy.SetActive(false);
-        UIManager.instance.LoadNextLevel(1);
+        player.playerData.SendToHell();
+        trackedTarget = null;
+        anim.SetBool("Kill", false);
     }
 
-    public void Defeat() 
+    public void Defeat()
     {
-        Rigidbody[] rigidbodies = ragdollEffect.GetComponentsInChildren<Rigidbody>();
-       
-        ragdollEffect.transform.position = this.transform.position;
-        
-        ragdollEffect.SetActive(true);
-
-        foreach (Rigidbody rb in rigidbodies)
+        if (ragdollEffect != null) 
         {
-            rb.AddExplosionForce(15, ragdollEffect.transform.position, 50f, 70f, ForceMode.Impulse);
+            ragdollEffect.transform.position = this.transform.position;
+            ragdollEffect.SetActive(true);
         }
+        
+        Instantiate(_coin, transform.position, Quaternion.identity);
 
         Destroy(gameObject);
     }
 
+    public void KillEnemy()
+    {
+        anim.SetTrigger("KillEnemy");
+    }
 
+    public void SetTrackedTarget(Transform tracked)
+    {
+        trackedTarget = tracked;
+        anim.SetBool("Kill", false);
+        attacking = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Enemy")
+        {
+            KillEnemy();
+        }
+    }
+
+    public void Banish() 
+    {
+        Instantiate(banishmentEffect, transform.position, Quaternion.identity);
+        Instantiate(_coin, transform.position, Quaternion.identity);
+        AudioManager.instance.PlaySoundEffects(laughter);
+        gameObject.SetActive(false);
+    }
+
+    private WaitForSeconds jumpPause = new WaitForSeconds(.3f);
+    IEnumerator JumpStall() 
+    {
+        yield return jumpPause;
+        FloorCheck();
+        StopCoroutine(JumpStall());
+    }
 }

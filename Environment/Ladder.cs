@@ -6,8 +6,8 @@ public class Ladder : MonoBehaviour
 {
     [SerializeField]
     private Vector3  _fromTopPosition, _fromPolarPosition, _standPos, _stepOffPos, _airPosition;
-    [SerializeField]
-    private GameObject _bottomExit, _topExit, _cover;
+   
+    public GameObject _bottomExit, _topExit, _cover;
 
     void Start() 
     {

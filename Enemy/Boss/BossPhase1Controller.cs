@@ -24,7 +24,7 @@ public class BossPhase1Controller : MonoBehaviour
 
     public Vector3 direction, playerDirection, leftPillarSetTrans, rightPillarSetTrans;
 
-    public Transform trackedTarget, leftPillar, rightPillar, playerModel, player, crowSpawnPoint;
+    public Transform trackedTarget, leftPillar, rightPillar, playerModel, crowSpawnPoint;
 
     public SkinnedMeshRenderer mr;
 
@@ -34,10 +34,15 @@ public class BossPhase1Controller : MonoBehaviour
 
     public GameObject crowToSpawn, playerDeathScene;
 
-
+    Player player;
     private void Awake()
     {
         instance = this;
+    }
+
+    private void Start()
+    {
+        player = GameObject.FindObjectOfType<Player>();
     }
 
     private void OnEnable()
@@ -63,7 +68,7 @@ public class BossPhase1Controller : MonoBehaviour
 
         if (player != null)
         {
-            playerDirection = transform.localPosition - player.localPosition;
+            playerDirection = transform.localPosition - player.transform.localPosition;
 
 
             playerDistance = playerDirection.z;

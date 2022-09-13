@@ -20,7 +20,7 @@ public class ClimbUpBehaviour : StateMachineBehaviour
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         //communicate with player class
-        Debug.Log("Trying to enter idle from eldge climb");
+        //Debug.Log("Trying to enter idle from eldge climb");
         Player _player = animator.gameObject.transform.GetComponentInParent<Player>();
 
         if (_player != null)

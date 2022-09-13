@@ -4,27 +4,38 @@ using UnityEngine;
 
 public class Berserker : Enemy, IDamageable
 {
-    // Start is called before the first frame update
-    public bool playerIsCloseEnough;
+    [SerializeField]
+    private float maxDistance = 7;
 
-    public bool wakingUp = true;
+    [SerializeField]
+    private float talkTimer = 1f;
 
-    public Vector3 _direction;
+    [SerializeField]
+    private int talkInt, damageSFX;
 
-    public Transform playerModel;
+    [SerializeField]
+    private Transform currentTarget;
 
-    public GameObject ragdoll, hurtbox;
+    private bool wakingUp = true, isRespawnable = false, playerIsCloseEnough;
+
+    private Vector3 direction;
 
     private float h;
 
     private Rigidbody rb;
 
-    public Material playerMat;
-
     private Color playerColor;
 
+    public Material playerMat;   
+
+    public Transform activator;
+
+    public GameObject ragdoll, hurtbox;
 
     public int health { get; set; }
+
+    public delegate void onKilled();
+    public static onKilled scumKilled;
 
     public override void Init()
     {
@@ -32,46 +43,58 @@ public class Berserker : Enemy, IDamageable
         _isDead = false;
         rb = GetComponent<Rigidbody>();
         playerColor = playerMat.color;
+
+        currentTarget = player.transform;
+
+        scumKilled += Kill;
     }
 
     // Update is called once per frame
     public override void Update()
     {
-        _direction = transform.localPosition - _player.transform.localPosition;
+        direction = transform.localPosition - currentTarget.localPosition;
 
-        if (Mathf.Abs(_direction.z) < 7)
+        if (Mathf.Abs(direction.z) < maxDistance)
         {
             
             playerIsCloseEnough = true;
             wakingUp = false;
-            _anim.SetBool("Wake", false);
-            if (Mathf.Abs(_direction.z) < 1)
+            anim.SetBool("Wake", false);
+            if (Mathf.Abs(direction.z) < 1)
             {
-                _anim.SetBool("Attacking", true);
+                if (currentTarget == player.transform)
+                {
+                    anim.SetBool("Attacking", true);
+                }
+                else 
+                {
+                    playerIsCloseEnough = false;
+                }
+                
 
             }
-            else if (Mathf.Abs(_direction.z) > 1)
+            else if (Mathf.Abs(direction.z) > 1)
             {
 
-                _anim.SetBool("Attacking", false);
+                anim.SetBool("Attacking", false);
             }
 
         }
         else
         {
-            _anim.SetBool("Attacking", false);
+            anim.SetBool("Attacking", false);
             playerIsCloseEnough = false;
         }
 
 
-        if (_player != null && !IsDead() && !wakingUp && CanMove() && !IsHurt())
+        if (player != null && !IsDead() && !wakingUp && CanMove() && !IsHurt() && playerIsCloseEnough)
         {
             Movement();
-            _anim.SetBool("Moving", true);
+            anim.SetBool("Moving", true);
         }
         else
         {
-            _anim.SetBool("Moving", false);
+            anim.SetBool("Moving", false);
             return;
         }
 
@@ -79,7 +102,33 @@ public class Berserker : Enemy, IDamageable
         {
             hurtbox.SetActive(false);
         }
-        else { hurtbox.SetActive(true); }
+        else 
+        {
+            if (hurtbox != null) 
+            {
+                hurtbox.SetActive(true);
+            }
+        }
+
+        if (talkTimer > 0) 
+        {
+            talkTimer -= Time.deltaTime;
+
+            if (talkTimer <= 0) 
+            {
+                talkInt = Random.Range(23, 27);
+                talkTimer = Random.Range(3.0f, 7.0f);
+                if (!player.playerData.isInHell()) 
+                {
+                    speak(talkInt);
+                }
+            }
+        }
+
+        if (!player.isActiveAndEnabled || !playerIsCloseEnough) 
+        {
+            SendBackHome();
+        }
     }
 
     public override void Movement()
@@ -99,13 +148,13 @@ public class Berserker : Enemy, IDamageable
 
         if (!_isDead) 
         {
-            if (_direction.z < 0)
+            if (direction.z < 0)
             {
                 _facing.y = -60f;
                 playerModel.localEulerAngles = _facing;
                 h = -1;
             }
-            else if (_direction.z > 0)
+            else if (direction.z > 0)
             {
                 _facing.y = 60f;
                 playerModel.localEulerAngles = _facing;
@@ -122,33 +171,43 @@ public class Berserker : Enemy, IDamageable
             {
               
                 _health--;
-                _anim.SetTrigger("Hurt");
+
+                anim.SetTrigger("Hurt");
+
+                AudioManager.instance.PlaySoundEffects(damageSFX);
 
                 StartCoroutine(Blink(1.5f));
 
                 if (_health <= 0)
                 {
                     _health = 0;
-                    _isDead = true;
-                    
-                    Quaternion lastRotation = playerModel.rotation;
-                    playerModel.gameObject.SetActive(false);
 
-                    GameObject deathEffect = Instantiate(ragdoll, transform.position, lastRotation);
-                    if (_coin != null) 
+                    if (isRespawnable)
                     {
-                        GameObject droppedItem = Instantiate(_coin, this.transform.position, Quaternion.Euler(new Vector3(0f, 90f, 0f)));
+                        scumKilled();
                     }
-   
-                    deathEffect.transform.parent = this.transform;
-                    Destroy(gameObject, 5f);
+                    else 
+                    {
+                        Kill();
+                    }
                     
                 }
             }
         }
     }
 
-    
+    public void speak(int animNum)
+    {
+        if (anim.GetBool("MouthOpen") == false)
+        {
+            anim.SetBool("MouthOpen", true);
+            anim.SetInteger("FaceAnim", animNum);
+
+            AudioManager.instance.PlaySoundEffects(animNum);
+        }
+        else { return; }
+    }
+
     IEnumerator Blink(float timer)
     {
         bool blinking = false;
@@ -177,39 +236,82 @@ public class Berserker : Enemy, IDamageable
         blinking = false;
     }
 
-    public Player ReturnPlayer() 
+    public void Kill() 
     {
-        return _player;
+        _isDead = true;
+
+        Quaternion lastRotation = playerModel.rotation;
+        //playerModel.gameObject.SetActive(false);
+
+        GameObject deathEffect = Instantiate(ragdoll, transform.position, lastRotation);
+        if (_coin != null)
+        {
+            GameObject droppedItem = Instantiate(_coin, this.transform.position, Quaternion.Euler(new Vector3(0f, 90f, 0f)));
+        }
+
+        gameObject.SetActive(false);
     }
 
-    public bool IsDead() 
+    public void SetTarget(Transform target) 
+    {
+        currentTarget = target;
+    }
+
+    public Player ReturnPlayer() 
+    {
+        return player;
+    }
+
+    public override bool IsDead() 
     {
         return _isDead;
     }
 
     public bool WakingUp()
     {
-        return _anim.GetCurrentAnimatorStateInfo(0).IsName("Activate");
+        return anim.GetCurrentAnimatorStateInfo(0).IsName("Activate");
     }
 
     public bool IsHurt() 
     {
-        return _anim.GetCurrentAnimatorStateInfo(0).IsName("Hurt");
+        return anim.GetCurrentAnimatorStateInfo(0).IsName("Hurt");
     }
 
     public bool IsAttacking() 
     {
-        return _anim.GetBool("Attacking");
+        return anim.GetBool("Attacking");
     }
 
     public bool CanMove()
     {
-        return _anim.GetBool("canMove");
+        return anim.GetBool("canMove");
     }
 
     public bool IsAntiAir() 
     {
-        return _anim.GetCurrentAnimatorStateInfo(0).IsName("AntiAir");
+        return anim.GetCurrentAnimatorStateInfo(0).IsName("AntiAir");
+    }
+
+    public override void Revive()
+    {
+        base.Revive();
+    }
+
+    void OnDisable()
+    {
+        scumKilled -= Kill;
+    }
+
+    public void SendBackHome() 
+    {
+        currentTarget = activator;
+    }
+
+    public void HuntPlayer(Player playersNewPos)
+    {
+        player = playersNewPos;
+
+        currentTarget = player.transform;
     }
 }
 

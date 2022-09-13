@@ -8,7 +8,7 @@ public class DestroyOverTime : MonoBehaviour
     public GameObject deathEffect;
     void OnEnable()
     {
-        Destroy(this.gameObject, 3f);
+        Destroy(this.gameObject, 1.5f);
         if (hasDeathEffect)
         {
             StartCoroutine(TurnOnEffect());

@@ -9,7 +9,7 @@ public class BossDamagePoint : MonoBehaviour
     {
         if (other.tag == "PlayerHurtBox")
         {
-            if (BossPhase2Controller.instance.canBeHit == true)
+            if (BossPhase2Controller.instance.ReturnHitStatus() == true)
             {
                 BossPhase2Controller.instance.DamageBoss();
                

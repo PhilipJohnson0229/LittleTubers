@@ -18,7 +18,7 @@ public class GrabLedgeBehaviour : StateMachineBehaviour
 
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        Debug.Log("Trying to enter idle from ladder climb");
+       
         Blamo blamo = animator.gameObject.transform.GetComponentInParent<Blamo>();
 
         if (blamo != null)

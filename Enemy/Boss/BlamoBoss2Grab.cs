@@ -29,6 +29,14 @@ public class BlamoBoss2Grab : MonoBehaviour
                 }
             }
         }
+
+        if (_other.tag == "Left Wall" || _other.tag == "Right Wall") 
+        {
+           
+            Instantiate(blamo.destroyWallsPrefab, _other.transform.position, Quaternion.identity);
+
+            Destroy(_other.gameObject);
+        }
     }
    
 }

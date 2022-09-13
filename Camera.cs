@@ -23,7 +23,7 @@ public class Camera : MonoBehaviour
     {  
         if (_target == null) 
         {
-            Debug.LogError("No target found for camera");
+            Debug.Log("No target found for camera");
         }
 
        

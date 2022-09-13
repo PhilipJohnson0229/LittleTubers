@@ -12,7 +12,11 @@ public class GiantBird : Enemy, IDamageable
 
     public GameObject projectile;
 
+    public bool shootsProjectile = true;
+
     public GameObject deathEffect, custscene;
+
+    public EnemySpawnPoint esPoint;
 
     public delegate void onDefeated();
     public static onDefeated birdDefeated;
@@ -30,86 +34,132 @@ public class GiantBird : Enemy, IDamageable
         rb = GetComponent<Rigidbody>();
         health = base._health;
         _currentTarget = _pointA.position;
-        birdDefeated += Defeat;
+      
+        
+        birdDefeated += ActivateCutscene;
     }
 
     public override void Movement()
     {
         base.Movement();
 
-        if (bombTime > 0)
+        if (shootsProjectile) 
         {
-            bombTime -= Time.deltaTime;
-
-            if (bombTime <= 0)
+            if (bombTime > 0)
             {
-                bombTime = btSet;
+                bombTime -= Time.deltaTime;
 
-                BombsAway();
+                if (bombTime <= 0)
+                {
+                    bombTime = btSet;
+
+                    BombsAway();
+                }
             }
         }
     }
+
     public void Damage(int amount)
     {
         health--;
         
         if (health < 1)
         {
-            _anim.SetTrigger("Death");
-            rb.useGravity = true;
-            rb.constraints = RigidbodyConstraints.None;
             _isDead = true;
+            Kill();
         }
         else
         {
             _isHit = true;
-            _anim.SetTrigger("Hit");
-            _anim.SetBool("InCombat", true);
-            UIManager _UIManager = GameObject.Find("UI Manager").GetComponent<UIManager>();
-            _UIManager.Notification(this.name + " was damaged!");
+            anim.SetTrigger("Hit");
+            anim.SetBool("InCombat", true);
+            
         }
     }
 
     void BombsAway()
     {
-        GameObject bomb = Instantiate(projectile, bombSalvo.position, Quaternion.identity);
+        GameObject bomb = Instantiate(projectile, bombSalvo.position, bombSalvo.rotation);
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "PlayerHurtBox")
         {
-            Damage(1);
-
-            Player player = other.GetComponentInParent<Player>();
-
-            if (player != null)
+            if (!player.playerData.isInHell()) 
             {
-                player.EnemyJump();
-                player.speak(Mathf.RoundToInt(Random.Range(19, 22)));
+                Damage(1);
             }
+            
+
+            player.EnemyJump();
+           
         }
 
         if (other.tag == "Ground")
         {
             Instantiate(deathEffect, transform.position, Quaternion.identity);
+            gameObject.SetActive(false);
         }
 
         if (other.tag == "Moving Box")
         {
-            Damage(10);
-            birdDefeated();
 
-        }
-    }
-
-    void Defeat() 
-    {
-        if (custscene != null) 
-        {
-           
             custscene.SetActive(true);
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
             Destroy(gameObject);
+            birdDefeated();
+            
         }
     }
+
+    public void Kill() 
+    {
+        if (anim != null) 
+        {
+            anim.SetTrigger("Death");
+        }
+        
+        
+        rb.useGravity = true;
+        rb.isKinematic = false;
+        rb.constraints = RigidbodyConstraints.None;
+
+        if (esPoint != null) 
+        {
+            esPoint.VerifyChain();
+        }
+    }
+
+    public void ActivateCutscene() 
+    {
+        Debug.Log("The bird was killed");
+        if (!custscene.activeInHierarchy && custscene!= null) 
+        {
+            custscene.SetActive(true);
+        }
+    }
+
+    public override void SetPatrolPoints(Transform a, Transform b)
+    {
+        base.SetPatrolPoints(a, b);
+    }
+
+    public override void Revive() 
+    {
+        _isDead = false;
+    }
+
+    public override bool IsDead()
+    {
+        Debug.Log(_isDead);
+        return _isDead;
+    }
+
+    private void OnDisable()
+    {
+
+        birdDefeated -= ActivateCutscene;
+    }
+  
 }

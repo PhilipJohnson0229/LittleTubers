@@ -34,4 +34,9 @@ public class EnableNumPad : MonoBehaviour
     {
         Destroy(gameObject);
     }
+
+    void OnDisable() 
+    {
+        Keypad.correctPassword -= ObjectiveComplete;
+    }
 }

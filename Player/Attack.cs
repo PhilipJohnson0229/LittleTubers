@@ -10,12 +10,11 @@ public class Attack : MonoBehaviour
 
     void OnTriggerEnter(Collider _other)
     {
-        if (_other.tag == "Player") 
+        if (_other.TryGetComponent<Player>(out var player)) 
         {
-            IDamageable hit = _other.GetComponent<IDamageable>();
-            if (hit != null)
+            if (player != null) 
             {
-                hit.Damage(amount);             
+                player.Damage(amount);
             }
         }
     }

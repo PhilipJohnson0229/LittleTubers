@@ -12,12 +12,15 @@ public class HurtCollider : MonoBehaviour
             
             if (berserker != null && !berserker.IsDead())
             {
-
-                berserker.Damage(1);
+                if (!berserker.ReturnPlayer().playerData.isInHell()) 
+                {
+                    berserker.Damage(1);
+                }
+                
 
                 if (berserker.ReturnPlayer() != null) 
                 {
-                    berserker.ReturnPlayer().Jump();
+                    berserker.ReturnPlayer().EnemyJump();
                 }
             }
         }

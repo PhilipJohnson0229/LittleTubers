@@ -30,13 +30,20 @@ public class CharacterSelect : MonoBehaviour
     public static onCharacterSelected characterSelected;
 
     public PlayableDirector introCutscene;
-    private void Start()
+
+    public PlayerData playerData;
+
+    private void OnEnable()
     {
         selectionUpdated += UpdateSelection;
         characterSelected += StartLoadingRoutine;
+    }
+
+    private void Start()
+    {
         selectionUpdated(selectionIndex);
     }
-    // Update is called once per frame
+ 
     void Update()
     {
         if (Input.GetKey(KeyCode.Space))
@@ -44,7 +51,7 @@ public class CharacterSelect : MonoBehaviour
             introCutscene.time = 5.0f;
         }
 
-        if (!characterChosen && introCutscene.time > 4.5f) 
+        if (!characterChosen && introCutscene.time > 4.5f)
         {
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
             {
@@ -73,12 +80,10 @@ public class CharacterSelect : MonoBehaviour
                 speak();
                 //StartCoroutine(FadeToNextLevel());
             }
-            //this is actually a delegate im just practicing
-            
-        } 
+        }
     }
 
-    public void UpdateSelection(int index) 
+    public void UpdateSelection(int index)
     {
         foreach (GameObject playerSelection in selectionObjects)
         {
@@ -97,14 +102,13 @@ public class CharacterSelect : MonoBehaviour
         if (slectedObjAnim.GetBool("Speak") == false)
         {
             slectedObjAnim.SetBool("Speak", true);
-           
 
             AudioManager.instance.PlaySoundEffects(selectionIndex);
         }
         else { return; }
     }
 
-    public void StartLoadingRoutine() 
+    public void StartLoadingRoutine()
     {
         StartCoroutine(FadeToNextLevel());
     }
@@ -113,19 +117,36 @@ public class CharacterSelect : MonoBehaviour
 
     IEnumerator FadeToNextLevel()
     {
+        InitializePlayerData(playerData);
 
-        float camFadeTarget = 1f;
+        float camFadeTarget = 1.5f;
+
         while (camFade.color.a < camFadeTarget)
         {
             var tempColor = camFade.color;
             tempColor.a += .1f;
             camFade.color = tempColor;
 
-
+            characterName.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 5f);
             yield return waitTime;
         }
 
+        Destroy(AudioManager.instance.gameObject, 1f);
         SceneManager.LoadScene(selectedLevel[selectionIndex]);
     }
 
+    private void OnDisable()
+    {
+        selectionUpdated -= UpdateSelection;
+        characterSelected -= StartLoadingRoutine;
+    }
+
+    private void InitializePlayerData(PlayerData playerData) 
+    {
+        playerData.setHealth(6);
+        playerData.setCoins(0);
+        playerData.setGirneyTime(40f);
+        playerData.setInHell(false);
+        playerData.setDied(false);
+    }
 }

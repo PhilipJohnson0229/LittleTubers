@@ -4,50 +4,24 @@ using UnityEngine;
 
 public class BouncingHazard : MonoBehaviour
 {
-    public Rigidbody rb;
-    public float jumpForce;
     public float speed;
 
-    public int health;
+    public float lifeSpan;
 
-    public GameObject deathEffect;
-    // Start is called before the first frame update
-
+    public AnimatedProjectile core;
 
     private void Update()
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.tag == "Player") 
+        lifeSpan -= Time.deltaTime;
+
+        if (lifeSpan <= 0) 
         {
-            Player player = other.GetComponent<Player>();
-
-            if (player != null) 
-            {
-                player.Damage(1);
-                Instantiate(deathEffect, this.transform.position, Quaternion.identity);
-                Destroy(this.gameObject, .3f);
-            }
-        }
-
-        if (other.tag == "Ground") 
-        {
-            
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-
-            health--;
-
-            if (health <= 0) 
-            {
-                Instantiate(deathEffect, this.transform.position, Quaternion.identity);
-                health = 0;
-                Destroy(this.gameObject, .3f); 
-            }
+            core.DestroyThis(gameObject);
         }
     }
+
 
     
 }

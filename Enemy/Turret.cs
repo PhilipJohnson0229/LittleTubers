@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Turret : Enemy
+public class Turret : Enemy, IDamageable
 {
 
     [SerializeField]
@@ -10,38 +10,65 @@ public class Turret : Enemy
 
     public Vector3 _offset;
 
-    public bool playerIsTooClose = false;
+    [SerializeField]
+    private bool playerIsTooClose = false, hasTurtleShell = false;
 
-    public Transform salvo; 
+    public Transform salvo;
+
+    private Vector3 direction;
+
+    private int deathJumpsLeft = 1;
+
+    public int health { get; set; }
+
     public override void Init()
     {
-        _anim = GetComponent<Animator>();
-        _player = FindObjectOfType<Player>();
+       
+        player = FindObjectOfType<Player>();
     }
 
     public override void Update()
     {
-        if (playerIsTooClose) { return; }
-        else if(_player != null)
+        if (hasTurtleShell) 
+        {
+            if (playerIsTooClose) { return; }
+        }
+        
+        if(player != null)
         {         
 
-            Vector3 _direction = transform.localPosition - _player.transform.localPosition;
-
-            if (_direction.z > 0)
+            direction = transform.position - player.transform.position;
+            if (hasTurtleShell)
             {
-                salvo.rotation = Quaternion.Euler( 0, 180f, 0);
-            }
-            else if (_direction.z < 0)
-            {
+                if (direction.z > 0)
+                {
+                    salvo.rotation = Quaternion.Euler(0, 180f, 0);
+                }
+                else if (direction.z < 0)
+                {
 
-                salvo.rotation = Quaternion.Euler(0, 0, 0);
+                    salvo.rotation = Quaternion.Euler(0, 0, 0);
+                }
             }
+            else 
+            {
+                if (direction.z > 0)
+                {
+                    playerModel.rotation = Quaternion.Euler(0, 180f, 0);
+                }
+                else if (direction.z < 0)
+                {
+
+                    playerModel.rotation = Quaternion.Euler(0, 0, 0);
+                }
+            }
+            
         }
     }
 
     public override void Attack() 
     {
-      
+        
         Vector3 _facing = transform.localEulerAngles;
         
         transform.localEulerAngles = _facing;
@@ -52,20 +79,70 @@ public class Turret : Enemy
 
     private void OnTriggerEnter(Collider other) 
     {
-        if (other.tag == "Player") 
+        if (hasTurtleShell)
         {
-            playerIsTooClose = true;
-            _anim.SetBool("PlayerTooClose", true);
+            if (other.tag == "Player")
+            {
+                playerIsTooClose = true;
+                anim.SetBool("PlayerTooClose", true);
+            }
+        }
+        else 
+        {
+            if (other.tag == "PlayerHurtBox") 
+            {
+                Damage(1);
+
+                if (player != null) 
+                {
+                    if (deathJumpsLeft > 0) 
+                    {
+                        player.EnemyJump();
+
+                        if (_isDead) 
+                        {
+                            deathJumpsLeft --;
+                        }
+                    }
+                }
+            }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.tag == "Player")
+        if (hasTurtleShell) 
         {
-            playerIsTooClose = false;
+            if (other.tag == "Player")
+            {
+                playerIsTooClose = false;
 
-            _anim.SetBool("PlayerTooClose", false);
+                anim.SetBool("PlayerTooClose", false);
+            }
+        }
+    }
+
+    public void Damage(int amount)
+    {
+        if (!_isDead)
+        {
+
+            _health--;
+
+            anim.SetTrigger("Hurt");
+            
+
+            if (_health <= 0)
+            {
+                _health = 0;
+                _isDead = true;
+
+                anim.SetBool("Dead", true);
+               
+                //deathEffect.transform.parent = this.transform;
+                Destroy(gameObject, 1.5f);
+
+            }
         }
     }
     // Start is called before the first frame update

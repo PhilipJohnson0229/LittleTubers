@@ -11,7 +11,7 @@ public class KillerCar : Enemy
     [SerializeField]
     private float playerDistance;
     bool honkedHorn = false;
-
+    public bool isOpenRoad = false;
     private void OnEnable()
     {
         rb = GetComponent<Rigidbody>();
@@ -25,7 +25,11 @@ public class KillerCar : Enemy
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
 
-        playerDistance = transform.position.z - _player.transform.position.z;
+        if (player != null)
+        {
+            playerDistance = transform.position.z - player.transform.position.z;
+        }
+        
         if (!honkedHorn) 
         {
             if (Mathf.Abs(playerDistance) < 2)
@@ -51,9 +55,8 @@ public class KillerCar : Enemy
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player") 
+        if (other.TryGetComponent<Player>(out var player)) 
         {
-            Player player = other.GetComponent<Player>();
 
             if (player != null) 
             {
@@ -61,9 +64,17 @@ public class KillerCar : Enemy
             }
         }
 
-        if (other.tag == "HellReaper")
+        if (other.TryGetComponent<GPlayer>(out var gPlayer))
         {
-            Blamo blamo = other.GetComponent<Blamo>();
+
+            if (gPlayer != null)
+            {
+                gPlayer.Damage(1);
+            }
+        }
+
+        if (other.TryGetComponent<Blamo>(out var blamo))
+        {
 
             if (blamo != null)
             {

@@ -4,10 +4,17 @@ using UnityEngine;
 
 public class BlockedPathEvent : MonoBehaviour
 {
-    public bool carriesProp;
+    public bool carriesProp, isComponent;
     [SerializeField]
     private bool  activated;
-    public GameObject propToHold;
+    public GameObject[] propToHold;
+
+    public int[] soundToPlay;
+
+    [SerializeField]
+    private int soundIndex = 0;
+
+    public Event eventToTrigger;
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "EvenTrigger")
@@ -24,11 +31,15 @@ public class BlockedPathEvent : MonoBehaviour
                 Player player = other.GetComponent<Player>();
                 if (player != null)
                 {
-                    player.canDropEventItem = true;
+                    player.setCanDropEventItem(true);
                     player.SetCurrentObstacle(this);
-                    if (player.carryingEventItem)
+                    if (player.getCarryingEventItem() == true)
                     {
-                        UIManager.instance.Notification("Press E To Interact");
+                        UIManager uiManager = GameObject.FindObjectOfType<UIManager>();
+                        if (uiManager != null) 
+                        {
+                            uiManager.Notification("Press E To Interact");
+                        }
                     }
                 }
             }
@@ -43,7 +54,7 @@ public class BlockedPathEvent : MonoBehaviour
 
             if (player != null)
             {
-                player.canDropEventItem = false;
+                player.setCanDropEventItem(false);
 
                 player.SetCurrentObstacle(null);
             }
@@ -52,10 +63,25 @@ public class BlockedPathEvent : MonoBehaviour
 
     public void ActivateProp()
     {
-        if (propToHold != null) 
+        for (int i = 0; i < propToHold.Length; i++) 
         {
-            propToHold.SetActive(true);
+            if (propToHold[i] != null)
+            {
+                propToHold[i].SetActive(true);
+            }
+           
         }
         activated = true;
+
+        if (isComponent) 
+        {
+            eventToTrigger.TriggerEvent();
+        }
+    }
+
+    public void playSounds() 
+    {
+        AudioManager.instance.PlaySoundEffects(soundToPlay[soundIndex]);
+        soundIndex++;
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerCheck : MonoBehaviour
 {
-    public GameObject thisJumpPad;
+    public GameObject[] jumpPads;
     public BlamosLedge ledge;
     public bool LevelTrigger = false;
     private void OnTriggerEnter(Collider other)
@@ -18,8 +18,8 @@ public class PlayerCheck : MonoBehaviour
                 
                 if (blamo != null) 
                 {
-                    blamo.jumpPad = thisJumpPad;
-                    blamo.AssignLedge(ledge);
+                    blamo.jumpPad = JumpPadChosen();
+                    //blamo.AssignLedge(ledge);
 
                     if (!blamo.HeightLevel() && !blamo.IsOnPlatform())
                     {
@@ -30,14 +30,14 @@ public class PlayerCheck : MonoBehaviour
                 LevelTrigger = false;
             }
 
-            thisJumpPad.SetActive(true);
+            ActivateJumpPads();
         }
 
         if (other.tag == "HellReaper") 
         {
             Blamo blamo = FindObjectOfType<Blamo>();
 
-            thisJumpPad.SetActive(false);
+            DeactivateJumpPads();
 
             blamo.AssignPlatform();
         }
@@ -75,8 +75,44 @@ public class PlayerCheck : MonoBehaviour
 
                 blamo.ResetPlatform();
 
-                thisJumpPad.SetActive(false);
-            }     
+                DeactivateJumpPads();
+            }
+        }
+    }
+
+    private GameObject JumpPadChosen()
+    {
+        GameObject currentJumpPad = null;
+
+        Blamo blamo = FindObjectOfType<Blamo>();
+
+        for (int i = 0; i < jumpPads.Length; i++)
+        {
+
+            currentJumpPad = jumpPads[i];
+
+            if (Mathf.Abs(blamo.transform.position.z - jumpPads[i].transform.localPosition.z) < 9) 
+            {
+                currentJumpPad = jumpPads[i];
+            }
+        }
+
+        return currentJumpPad;
+    }
+
+    private void ActivateJumpPads()
+    {
+        for (int i = 0; i < jumpPads.Length; i++) 
+        {
+            jumpPads[i].SetActive(true);
+        }
+    }
+
+    private void DeactivateJumpPads()
+    {
+        for (int i = 0; i < jumpPads.Length; i++)
+        {
+            jumpPads[i].SetActive(false);
         }
     }
 }

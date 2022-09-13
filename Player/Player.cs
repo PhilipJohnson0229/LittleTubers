@@ -6,101 +6,74 @@ using Cinemachine;
 
 public class Player : MonoBehaviour, IDamageable
 {
-    [SerializeField]
-    private CharacterController _characterController;
-    [SerializeField]
-    private float _speed = 5.0f;
-    [SerializeField]
-    private float _gravity = 5.0f;
-    [SerializeField]
-    private float _jumpForce = 5.0f;
+    private CharacterController characterController;
 
     [SerializeField]
-    private int _coin;
+    private Vector3 direction;
+    
+    private Animator anim;
 
-    [SerializeField]
-    private int _health, maxHealth = 6;
+    private bool usingLadderFirstTime = true, facingLeft = false, ladderTopFlag = false;
 
-    [SerializeField]
-    private Vector3 _direction;
+    private Ledge ledge;
 
-    public bool facingLeft = false;
-    //comnbining projects
-    [SerializeField]
-    private Animator _anim;
+    private bool onLedge, nearLadder, onLadder, climbingOffLadder, isJumping;
 
-    [SerializeField]
-    private bool _isJumping;
+    private bool isKnocking, canPickUpEventItem, canDropEventItem, carryingEventItem, canBeHurt;
 
-    [SerializeField]
-    private Ledge _ledge;
+    private Ladder currentLadder;
 
-    [SerializeField]
-    private bool _onLedge;
+    private CapsuleCollider airCollider;
 
-    [SerializeField]
-    private bool _nearLadder;
+    private Rigidbody airBody;
 
-    [SerializeField]
-    private bool _LadderTopFlag = false;
-
-    [SerializeField]
-    private bool _onLadder;
-
-    [SerializeField]
-    private Ladder _currentLadder;
-
-    [SerializeField]
-    private bool _climbingOffLadder;
-
-    [SerializeField]
-    private CapsuleCollider _airCollider;
-
-    [SerializeField]
-    private Rigidbody _airBody;
-
-    [SerializeField]
-    private float _pushPower = 2.0f;
+    private float pushPower = 2.0f;
 
     [SerializeField]
     private BlockedPathEvent currentObstacle;
 
     [SerializeField]
     private Transform playerModel;
+
+    private UIManager uiManager;
+
+    public GameObject keyVisual;
+
     public int health { get; set; }
 
-    public float dataToTrack;
-
-    public CinemachineVirtualCamera vcam;
+    public int healSoundEffect;
 
     public GameObject bossHurtBox, ragdoll, kniferRagdoll, kniferRagdollDrop, currentKnifer;
 
-    public bool isKnocking, canPickUpEventItem, canDropEventItem, carryingEventItem, canBeHurt;
-
     public Material playerMat;
 
-    public float knockBackCounter = 1.5f;
+    private float knockBackCounter = 1.5f;
 
     public Vector2 knockBackPower;
 
     public Color playerColor;
+
+    public PlayerData playerData;
+
+  
+
     void Start()
     {
-        _characterController = GetComponent<CharacterController>();
-        //combining projects
-        _anim = GetComponentInChildren<Animator>();
-        _airCollider = GetComponent<CapsuleCollider>();
-        _airBody = GetComponent<Rigidbody>();
+        characterController = GetComponent<CharacterController>();
+        anim = GetComponentInChildren<Animator>();
+        airCollider = GetComponent<CapsuleCollider>();
+        airBody = GetComponent<Rigidbody>();
+        uiManager = FindObjectOfType<UIManager>();
         playerMat.color = playerColor;
         canBeHurt = true;
-        _health = maxHealth;
-        if (_airCollider != null) { _airCollider.enabled = false; }
-        if (_airBody != null) { _airBody.detectCollisions = false; }
+        health = playerData.ReturnHealth();
+
+        if (airCollider != null) { airCollider.enabled = false; }
+        if (airBody != null) { airBody.detectCollisions = false; }
         
-        if (UIManager.instance != null) 
+        if (uiManager != null) 
         {
-            UIManager.instance.UpdateLives(_health);
-            UIManager.instance.UpdateCoins(_coin);
+            uiManager.UpdateLives(health);
         }
     }
 
@@ -108,42 +81,37 @@ public class Player : MonoBehaviour, IDamageable
     {
         CalculateMovement();
 
-        if (_characterController.isGrounded && Input.GetKeyDown(KeyCode.J))
-        {
-            Attack();
-        }
-
-        if (_onLedge)
+        if (onLedge)
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                _anim.SetTrigger("Climb_Up");
+                anim.SetTrigger("Climb_Up");
             }
         }
 
-        if (!_onLadder && _nearLadder)
+        if (!onLadder && nearLadder)
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                if (_characterController.isGrounded && !_LadderTopFlag)
+                if (characterController.isGrounded && !ladderTopFlag)
                 {
-                    ClimbLadder(_currentLadder.MountLadderPos(true, false));
+                    ClimbLadder(currentLadder.MountLadderPos(true, false));
                 }
-                else if (!_characterController.isGrounded && !_LadderTopFlag)
+                else if (!characterController.isGrounded && !ladderTopFlag)
                 {
-                    _currentLadder.SetAirPosition(transform.position.x, transform.position.y);
-                    ClimbLadder(_currentLadder.MountLadderPos(false, true));
+                    currentLadder.SetAirPosition(transform.position.x, transform.position.y);
+                    ClimbLadder(currentLadder.MountLadderPos(false, true));
                 }
-                else if (_characterController.isGrounded && _LadderTopFlag)
+                else if (characterController.isGrounded && ladderTopFlag)
                 {
-                    ClimbLadder(_currentLadder.EnterFromTopPos());
+                    ClimbLadder(currentLadder.EnterFromTopPos());
                 }
             }
         }
 
-        if (canPickUpEventItem && !carryingEventItem) 
+        if (canPickUpEventItem) 
         {
-            if (Input.GetKey(KeyCode.E)) 
+            if (Input.GetKey(KeyCode.E) && !carryingEventItem) 
             {
                 PickUpEventItem();
                 canPickUpEventItem = false;
@@ -151,48 +119,47 @@ public class Player : MonoBehaviour, IDamageable
             }
         }
 
-        if (canDropEventItem && carryingEventItem) 
-        {
-            if (Input.GetKey(KeyCode.E))
-            {
-                canDropEventItem = false;
-                DropOffEventItem();
-            }
-        }
-
         if (carryingEventItem) 
         {
             if (Input.GetKey(KeyCode.Space))
             {
-                DropEventItem();
+                dropEventItem();
             }
+
+            if (canDropEventItem) 
+            {
+                if (Input.GetKey(KeyCode.E))
+                {
+                    setCanDropEventItem(false);
+                    installEventItem();
+                }
+            }           
         }
     }
 
     void CalculateMovement() 
     {
-        Vector3 _facing = playerModel.localEulerAngles;
+        Vector3 facing = playerModel.localEulerAngles;
 
         //if grounded, we can jump
-        if (_characterController.isGrounded && !isKnocking)
+        if (characterController.isGrounded && !isKnocking && !onLadder)
         {
-            float _h = Input.GetAxisRaw("Horizontal");
-            _direction = new Vector3(0, 0, _h) * _speed;
-            _anim.SetFloat("Speed", Mathf.Abs(_h));
-            _anim.SetBool("Grounded", true);
+            float h = Input.GetAxisRaw("Horizontal");
+            direction = new Vector3(0, 0, h) * playerData.getSpeed();
+            anim.SetFloat("Speed", Mathf.Abs(h));
+            anim.SetBool("Grounded", true);
             //setting our direction based on input
             //this will be the vector3 that will control the player
-            if (_h != 0 && !_onLadder)
+            if (h != 0 && !onLadder)
             {
-                _facing.y = _direction.z > 0 ? 40 : 140;
-                playerModel.localEulerAngles = _facing;
+                facing.y = direction.z > 0 ? 40 : 140;
+                playerModel.localEulerAngles = facing;
             }
 
-            //combining projects
-            if (_isJumping == true)
+            if (getIsJumping() == true)
             {
-                _isJumping = false;
-                _anim.SetBool("Jump", false);
+                setIsJumping(false);
+                anim.SetBool("Jump", false);
             }
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -201,18 +168,14 @@ public class Player : MonoBehaviour, IDamageable
             }        
         }
 
-        if (_onLedge) 
-        {
-            _direction.y = 0;
-        }
-
-        //combining projects absorb code above
-        if (_onLadder && !_climbingOffLadder)
+        direction.y = onLedge ? 0 : direction.y;
+       
+        if (onLadder && !climbingOffLadder)
         {
             float _v = Input.GetAxisRaw("Vertical");
-            _direction = new Vector3(0, _v, 0) * _speed;
-            _anim.SetFloat("Speed", Mathf.Abs(_v));
-            transform.Translate(_direction * Time.deltaTime);
+            direction = new Vector3(0, _v, 0) * playerData.getSpeed();
+            anim.SetFloat("Speed", Mathf.Abs(_v));
+            transform.Translate(direction * Time.deltaTime);
 
             //dismount if player presses E key
             if (Input.GetKeyDown(KeyCode.E))
@@ -220,36 +183,46 @@ public class Player : MonoBehaviour, IDamageable
                 DismountLadder();
             }
         }
-        else if(!_onLedge)
+        
+        if(!onLedge)
         {
-            if (_airBody != null)
+            if (airBody != null)
             {
-                _airBody.detectCollisions = false;
+                airBody.detectCollisions = false;
             }
 
-            if (_airCollider != null)
+            if (airCollider != null)
             {
-                _airCollider.enabled = false;
+                airCollider.enabled = false;
             }
             //if we are not on a ladder then apply gravity and calculate movement on the ground
-            if (!_characterController.isGrounded && !_onLadder)
+            if (!characterController.isGrounded && !onLadder)
             {
                 float _h = Input.GetAxisRaw("Horizontal");
-                _direction.z = _h * _speed;
+                direction.z = _h * playerData.getSpeed();
                 if (_h != 0)
                 {
-                    _facing.y = _direction.z > 0 ? 40 : 140;
-                    playerModel.localEulerAngles = _facing;
+                    facing.y = direction.z > 0 ? 40 : 140;
+                    playerModel.localEulerAngles = facing;
 
-                    _anim.SetBool("Grounded", false);
+                    anim.SetBool("Grounded", false);
                 }
             }
 
             
-            _direction.y -= _gravity * Time.deltaTime;
-            _characterController.Move(_direction * Time.deltaTime);
+            direction.y -= playerData.getGravity() * Time.deltaTime;
+            if (anim.GetCurrentAnimatorStateInfo(0).IsName("Stuck"))
+            {
+                direction.z = 0;
+            }
+            characterController.Move(direction * Time.deltaTime);
 
-            if (!_characterController.isGrounded)
+            if (characterController.isGrounded && direction.y < 0)
+            {
+                direction.y = 0;
+            }
+
+            if (!characterController.isGrounded)
             {
                 bossHurtBox.SetActive(true);
             }
@@ -259,41 +232,14 @@ public class Player : MonoBehaviour, IDamageable
             }
         }
 
-        if (isKnocking)
-        {
-            float yStore = _direction.y;
-
-            if (!facingLeft)
-            {
-                _direction = Vector3.back * knockBackPower.x;
-            } else 
-            {
-                _direction = Vector3.forward * knockBackPower.x;
-            }
-            
-
-            _direction.y = yStore;
-
-            if (_characterController.isGrounded)
-            {
-                _direction.y = 0f;
-
-            }
-
-            _direction.y += Physics.gravity.y * Time.deltaTime * 5f;
-            _characterController.Move(_direction * Time.deltaTime);
-        }
-
-        if (_facing.y == 40f)
+        if (facing.y == 40f)
         {
             facingLeft = false;
         }
-        else if(_facing.y == 140f)
+        else if(facing.y == 140f)
         {
             facingLeft = true;
-        }
-
-        
+        }  
     }
 
     IEnumerator Blink(float timer) 
@@ -330,159 +276,194 @@ public class Player : MonoBehaviour, IDamageable
 
     public void Jump() 
     {
-        _direction.y = 0f;
-        _direction.y += _jumpForce;
-        _direction.x = 0;
-        _isJumping = true;
-        _anim.SetBool("Jump", true);
+        AudioManager.instance.PlaySoundEffects(playerData.jumpSound);
+        direction.y = 0f;
+        direction.y += playerData.getJumpForce();
+        direction.x = 0;
+        setIsJumping(true);
+        anim.SetBool("Jump", true);
     }
 
     public void EnemyJump()
     {
-        _direction.y = 0f;
-        _direction.y += _jumpForce * .3f;
-        _direction.x = 0;
-        _isJumping = true;
-        _anim.SetBool("Jump", true);
+        AudioManager.instance.PlaySoundEffects(playerData.enemyJumpSound);
+        direction.y = 0f;
+        direction.y += playerData.getJumpForce() * .6f;
+        direction.x = 0;
+        setIsJumping(true);
+        anim.SetBool("Jump", true);
     }
 
-    public void CollectCoin(int _amount) 
+    public void TrampolineJump(int jumpSound)
     {
-        _coin += _amount;
-        UIManager.instance.UpdateCoins(_coin);
-    }
-
-    public void SpendCoin(int _amount)
-    {
-        _coin -= _amount;
-        UIManager.instance.UpdateCoins(_coin);
+        AudioManager.instance.PlaySoundEffects(jumpSound);
+        direction.y = 0f;
+        direction.y += playerData.getJumpForce() * 1.5f;
+        direction.x = 0;
+        setIsJumping(true);
+        anim.SetBool("Jump", true);
     }
 
     public void Damage(int amount) 
     {
-        if (canBeHurt) 
+        if (playerData.isInHell() == false)
         {
-            _health -= amount;
-            StartCoroutine(Blink(knockBackCounter));
-            UIManager.instance.UpdateLives(_health);
+            playerData.Damage(amount);
+            health = playerData.ReturnHealth();
+            // StartCoroutine(Blink(knockBackCounter));
+            uiManager.UpdateLives(health);
 
-            int randNum = Random.Range(1,3);
+            int randNum = Random.Range(1, 3);
 
             AudioManager.instance.PlaySoundEffects(randNum);
-            _anim.SetBool("MouthOpen", true);
-            _anim.SetInteger("FaceAnim", randNum);
-            if (_health < 1)
+            anim.SetBool("MouthOpen", true);
+            anim.SetInteger("FaceAnim", randNum);
+
+            if (health < 1)
             {
-                UIManager.instance.LoadNextLevel(7);
+                playerData.SendToHell();
             }
         }
-        
+        else 
+        {
+            HellSpawn();
+        }  
     }
+
+    public void HellSpawn() 
+    {
+        uiManager.HellSpawn();
+        playerData.SplatEffect(transform.position);
+        gameObject.SetActive(false);
+    }
+
+    public void SendToHell()
+    {
+        uiManager.CheckLifeOffering();
+        ragdoll.transform.position = transform.position;
+        playerModel.gameObject.SetActive(false);
+    }
+
 
     public void Heal() 
     {
-        _health = maxHealth;
-        UIManager.instance.UpdateLives(_health);
+        playerData.setHealth(6);
+        health = playerData.ReturnHealth();
+        AudioManager.instance.PlaySoundEffects(healSoundEffect);
+        uiManager.UpdateLives(health);
     }
 
     public void Ensnare(Blamo blamo) 
     {
         blamo.Kill();
-        
-        Destroy(this.gameObject);
+        PitFall();
+    }
+
+    public void RushEnsnare(RushingBlamo blamo)
+    {
+        blamo.Kill();
+        PitFall();
     }
 
     public void BossEnsnare(BossPhase1Controller blamo)
     {
         blamo.Kill();
 
-        Destroy(this.gameObject);
+        gameObject.SetActive(false);
     }
 
     public void Boss2Ensnare(BossPhase2Controller blamo)
     {
         blamo.Kill();
 
-        Destroy(this.gameObject);
+        gameObject.SetActive(false);
     }
 
-    public int GetCoinsCount() 
+    public void PitFall() 
     {
-        return _coin;
+        uiManager.OfferAChoice();
+        gameObject.SetActive(false);
     }
 
     public void GrabLedge(Vector3 _targetPos, Ledge _currentLedge)
     {
-        Debug.Log("grabbing ledge?");
-        _characterController.enabled = false;
-        _isJumping = false;
-        _anim.SetBool("Grab_Ledge", true);
-        _anim.SetBool("Jump", false);
-        _anim.SetFloat("Speed", 0f);
-        _onLedge = true;
+        
+        characterController.enabled = false;
+        isJumping = false;
+        anim.SetBool("Grab_Ledge", true);
+        anim.SetBool("Jump", false);
+        anim.SetFloat("Speed", 0f);
+        onLedge = true;
         transform.position = _targetPos;
-        transform.localEulerAngles = _currentLedge.GetLedgeDirection();
-        _ledge = _currentLedge; 
+        playerModel.localEulerAngles = _currentLedge.GetLedgeDirection();
+        ledge = _currentLedge; 
     }
 
     public void ClimbFromLedgeComplete()
     {
-        transform.position = _ledge.GetStandPos();
-        _anim.SetBool("Grab_Ledge", false);
-        _isJumping = false;
-        _anim.SetBool("Jump", false);
-        _onLedge = false;
-        _characterController.enabled = true;
+        transform.position = ledge.GetStandPos();
+        anim.SetBool("Grab_Ledge", false);
+        isJumping = false;
+        anim.SetBool("Jump", false);
+        onLedge = false;
+        characterController.enabled = true;
     }
 
     public void LadderCheck(Ladder _ladder, bool _inRange, bool _topEntry)
     {
-        if (!_onLadder)
+        if (!onLadder)
         {
-            _nearLadder = _inRange;
+            nearLadder = _inRange;
         }
 
         if (_topEntry)
         {
-            _LadderTopFlag = true;
+            ladderTopFlag = true;
         }
-        _currentLadder = _ladder;
+        currentLadder = _ladder;
+
+        if (usingLadderFirstTime) 
+        {
+            uiManager.Notification("Press E");
+            usingLadderFirstTime = false;
+        }
+        
     }
 
     public void ClimbLadder(Vector3 _targetPos)
     {
-        _characterController.enabled = false;
-        _airCollider.enabled = true;
-        _airBody.detectCollisions = true;
+        characterController.enabled = false;
+        airCollider.enabled = true;
+        airBody.detectCollisions = true;
 
         //snap player to position on ladder
         transform.position = _targetPos;
-        Vector3 _facing = playerModel.localEulerAngles;
-        _facing.y = -90f;
-        playerModel.localEulerAngles = _facing;
+        Vector3 facing = playerModel.localEulerAngles;
+        facing.y = -90f;
+        playerModel.localEulerAngles = facing;
 
         //play ladder climbing animation
-        _nearLadder = false;
-        _LadderTopFlag = false;
-        _onLadder = true;
-        _anim.SetBool("Jump", false);
-        _anim.SetBool("Climb_Ladder", _onLadder);
+        nearLadder = false;
+        ladderTopFlag = false;
+        onLadder = true;
+        anim.SetBool("Jump", false);
+        anim.SetBool("Climb_Ladder", onLadder);
 
-        _currentLadder.OpenExits();
+        currentLadder.OpenExits();
     }
 
     void ExitLadder(bool _isTopExit)
     {
-        _anim.SetBool("Climb_Ladder", false);
-        _climbingOffLadder = true;
-        _anim.SetBool("Jump", false);
+        anim.SetBool("Climb_Ladder", false);
+        climbingOffLadder = true;
+        anim.SetBool("Jump", false);
         if (_isTopExit)
         {
-            _anim.SetTrigger("Exit_Ladder_Top");
+            anim.SetTrigger("Exit_Ladder_Top");
         }
         else
         {
-            _anim.SetTrigger("Exit_Ladder_Bottom");
+            anim.SetTrigger("Exit_Ladder_Bottom");
         }
     }
 
@@ -490,56 +471,54 @@ public class Player : MonoBehaviour, IDamageable
     {
         Debug.Log("trying to get off the ladder");
         //turn character controller back on
-        _characterController.enabled = true;
-        _airCollider.enabled = true;
-        _airBody.detectCollisions = false;
-        _airCollider.enabled = false;
+        characterController.enabled = true;
+        airCollider.enabled = true;
+        airBody.detectCollisions = false;
+        airCollider.enabled = false;
         ClearLadderFlag();
 
         //correct animation
-        _anim.SetBool("Climb_Ladder", false);
-        _isJumping = true;
-        _anim.SetBool("Jump", true);
-        _onLadder = false;
-        _nearLadder = false;
-        _currentLadder.CloseExits();
+        anim.SetBool("Climb_Ladder", false);
+        isJumping = true;
+        anim.SetBool("Jump", true);
+        onLadder = false;
+        nearLadder = false;
+        currentLadder.CloseExits();
     }
 
     public void ClearLadderFlag()
     {
-        _LadderTopFlag = false;
+        ladderTopFlag = false;
     }
 
     public void StepOffLadder(bool _isTopExit)
     {
-       
-
         if (_isTopExit)
         {
-            transform.position = _currentLadder.GetStandPos();
+            transform.position = currentLadder.GetStandPos();
         }
         else
         {
-            transform.position = _currentLadder.GetStepDownPos();
+            transform.position = currentLadder.GetStepDownPos();
         }
         
-        _climbingOffLadder = false;
-        _onLadder = false;
-        _characterController.enabled = true;
-        _currentLadder.CloseExits();
+        climbingOffLadder = false;
+        onLadder = false;
+        characterController.enabled = true;
+        currentLadder.CloseExits();
     }
 
     void Attack() 
     {
-        _anim.SetTrigger("Attack");
+        anim.SetTrigger("Attack");
     }
 
     public void speak(int animNum)
     {
-        if (_anim.GetBool("MouthOpen") == false) 
+        if (anim.GetBool("MouthOpen") == false) 
         {
-            _anim.SetBool("MouthOpen", true);
-            _anim.SetInteger("FaceAnim", animNum);
+            anim.SetBool("MouthOpen", true);
+            anim.SetInteger("FaceAnim", animNum);
 
             AudioManager.instance.PlaySoundEffects(animNum);
         }
@@ -554,7 +533,7 @@ public class Player : MonoBehaviour, IDamageable
     public void PickUpEventItem() 
     {
         kniferRagdoll.SetActive(true);
-
+        
         if (currentKnifer != null) 
         {
             Destroy(currentKnifer);
@@ -564,10 +543,10 @@ public class Player : MonoBehaviour, IDamageable
         //have the animator play a raised arm animation and mask out the legs
     }
 
-    public void DropOffEventItem()
+    public void installEventItem()
     {
         kniferRagdoll.SetActive(false);
-
+        
         if (currentObstacle != null)
         {
             Animator currentObstAnim = currentObstacle.GetComponent<Animator>();
@@ -583,20 +562,46 @@ public class Player : MonoBehaviour, IDamageable
         //have the animator play a raised arm animation and mask out the legs
     }
 
-    void DropEventItem() 
+    public void dropEventItem() 
     {
         carryingEventItem = false;
-
+        
         if (facingLeft)
         {
-            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z - 2), Quaternion.identity);
+            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z), Quaternion.identity);
         }
         else 
         {
-            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z + 2), Quaternion.identity);
+            Instantiate(kniferRagdollDrop, new Vector3(transform.position.x, transform.position.y - 1, transform.position.z), Quaternion.identity);
         }
         
         kniferRagdoll.SetActive(false);
+    }
+
+    public void Stun() 
+    {
+        anim.Play("Stuck");
+        anim.SetBool("Stun", true);
+        //anim.ResetTrigger("Stun");
+    }
+
+    public void UnStun() 
+    {
+        anim.SetBool("Stun", false);
+    }
+
+    public void PickUpKey() 
+    {
+        playerData.setHasKey(true);
+
+        keyVisual.SetActive(true);
+    }
+
+    public void UseKey() 
+    {
+        playerData.setHasKey(false);
+
+        keyVisual.SetActive(false);
     }
 
     void OnTriggerEnter(Collider _other)
@@ -613,38 +618,12 @@ public class Player : MonoBehaviour, IDamageable
         if (_other.tag == "KillerCar") 
         {
             Damage(2);
-            #region attempted ragdoll
-
-            /*Rigidbody[] rigidbodies = ragdoll.GetComponentsInChildren<Rigidbody>();
-
-            ragdoll.transform.position = this.transform.position;
-
-            ragdoll.SetActive(true);
-
-            foreach (Rigidbody rb in rigidbodies)
-            {
-                rb.AddExplosionForce(10, ragdoll.transform.position, 50f, 70f, ForceMode.Impulse);
-              
-            }
-            //ragdoll.AddTorque(new Vector3(5f, 0, 0), ForceMode.Impulse);
-            Destroy(gameObject);
-            UIManager.instance.LoadNextLevel(0);*/
-            #endregion
+           
         }
-    }
-    
-    public void Freeze()
-    {
-        _anim.SetBool("CanMove", true);
-    }
-
-    public void Unfreeze() 
-    {
-        _anim.SetBool("CanMove", false);
     }
 
      private void OnControllerColliderHit(ControllerColliderHit _hit)
-   {
+     {
        if (_hit.transform.tag == "Moving Box") 
        {
            Rigidbody _box = _hit.collider.GetComponent<Rigidbody>();
@@ -653,8 +632,55 @@ public class Player : MonoBehaviour, IDamageable
            {
                Vector3 _pushDirection = new Vector3(0, 0, _hit.moveDirection.z);
 
-               _box.velocity = _pushDirection * _pushPower;
+               _box.velocity = _pushDirection * pushPower;
            }
        }
-   }
+     }
+
+    private void OnEnable()
+    {
+        playerData.playerDied += SendToHell;
+
+    }
+
+    private void OnDisable()
+    {
+        playerData.playerDied -= SendToHell;
+
+    }
+
+    public bool CanPickUpEventItem() 
+    {
+        return canPickUpEventItem;
+    }
+
+    public void setCanPickUpEventItem(bool canPickUpItem) 
+    {
+        this.canPickUpEventItem = canPickUpItem;
+    }
+
+    public void setCanDropEventItem(bool canDropItem)
+    {
+        this.canDropEventItem = canDropItem;
+    }
+
+    public void setCarryingEventItem(bool value)
+    {
+        this.carryingEventItem = value;
+    }
+
+    public void setIsJumping(bool value) 
+    {
+        isJumping = value;
+    }
+
+    public bool getIsJumping() 
+    {
+        return isJumping;
+    }
+
+    public bool getCarryingEventItem() 
+    {
+        return carryingEventItem;
+    }
 }

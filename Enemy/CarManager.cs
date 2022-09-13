@@ -14,6 +14,8 @@ public class CarManager : MonoBehaviour
 
     private bool carHasCrashed;
 
+    public bool isOnOpenRoad = false;
+
     [SerializeField]
     private bool playerIsCloseEnough;
 
@@ -24,6 +26,9 @@ public class CarManager : MonoBehaviour
     
     [SerializeField]
     private Player thePlayer;
+
+    [SerializeField]
+    private GPlayer theGPlayer;
 
     public delegate void onDefeated();
     public static onDefeated carDefeated;
@@ -36,32 +41,49 @@ public class CarManager : MonoBehaviour
     {
         countDownTimer = countDownSetTime;
         carDefeated += ClearPath;
-        SpawnCar(Random.Range(0, spawnPoints.Length - 1));
+       
+    }
+
+    private void OnDisable()
+    {
+        carDefeated -= ClearPath;
     }
 
     private void Start()
     {
-        thePlayer = GameObject.FindObjectOfType<Player>();    
+        if (!isOnOpenRoad)
+        {
+            thePlayer = GameObject.FindObjectOfType<Player>();
+        }
+        else 
+        {
+            theGPlayer = GameObject.FindObjectOfType<GPlayer>();
+        }
 
 
+        SpawnCar(Random.Range(0, spawnPoints.Length - 1));
     }
 
     // Update is called once per frame
     void Update()
     {
-
-     
         if (!carHasCrashed || thePlayer != null) 
         {
-            playerDistance = Mathf.Abs(this.transform.position.z - thePlayer.transform.position.z);
+            if (!isOnOpenRoad)
+            {
+                playerDistance = Mathf.Abs(this.transform.position.z - thePlayer.transform.position.z);
 
+                if (playerDistance <= 6 && playerDistance < 7)
+                {
+                    playerIsCloseEnough = true;
+                }
+                else { playerIsCloseEnough = false; }
 
-            if (playerDistance <= 6 && playerDistance < 7)
+            }
+            else 
             {
                 playerIsCloseEnough = true;
             }
-            else { playerIsCloseEnough = false; }
-
 
             if (playerIsCloseEnough && countDownTimer > 0 && !carIsActive)
             {
@@ -69,6 +91,7 @@ public class CarManager : MonoBehaviour
 
                 if (countDownTimer <= 0)
                 {
+                    countDownSetTime = Random.Range(1, 3);
                     countDownTimer = countDownSetTime;
 
                     SpawnCar(Random.Range(0, spawnPoints.Length - 1));
@@ -90,6 +113,7 @@ public class CarManager : MonoBehaviour
     {
         carIsActive = true;
         GameObject killeraCar = Instantiate(carPrefab, spawnPoints[randomNumber].position, carRot) as GameObject;
+        killeraCar.transform.parent = this.transform;
     }
 
     private void OnTriggerEnter(Collider other)

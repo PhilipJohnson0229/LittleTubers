@@ -10,17 +10,18 @@ public class Checkpoint : MonoBehaviour
 
     void Start() 
     {
-        _deadZone = GameObject.Find("Dead Zone").GetComponent<DeadZone>();
+        _deadZone = GameObject.FindObjectOfType<DeadZone>();
     }
    
     void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player")
+        if (other.TryGetComponent<Player>(out var player))
         {
             //tell deadzone to set spawn point here
-            if (_deadZone != null)
+            if (_deadZone != null && player != null)
             {
                 _deadZone.SetSpawnPoint(this.gameObject);
+                _deadZone.SetPlayer(player);
             }
 
             Checkpoint[] allCp = FindObjectsOfType<Checkpoint>();

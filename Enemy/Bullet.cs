@@ -34,5 +34,11 @@ public class Bullet : MonoBehaviour
             Instantiate(hitEffect, transform.position, Quaternion.identity);
             Destroy(this.gameObject);
         }
+
+        if (other.tag == "KillerCar")
+        {
+            Instantiate(hitEffect, transform.position, Quaternion.identity);
+            Destroy(this.gameObject);
+        }
     }
 }

@@ -16,18 +16,22 @@ public class KniferKey : MonoBehaviour
 
     private void Start()
     {
-        player = GameObject.Find("Player").GetComponent<Player>();
+        player = GameObject.FindObjectOfType<Player>();
         anim = GetComponent<Animator>();
         Keypad.incorrectPassword += TriggerAttack;
     }
     void Update()
     {
-        float playerDistance = Mathf.Abs(transform.position.z - player.transform.position.z);
-       
-        if (playerDistance < 5)
+        if (player != null) 
         {
-            playerIsCLoseEnough = true;
+            float playerDistance = Mathf.Abs(transform.position.z - player.transform.position.z);
+
+            if (playerDistance < 5)
+            {
+                playerIsCLoseEnough = true;
+            }
         }
+        
 
         if (requiresTrigger)
         {
@@ -41,7 +45,9 @@ public class KniferKey : MonoBehaviour
 
                     if (lockedDoor != null)
                     {
+                        //AudioManager.instance.PlaySoundEffects(29);
                         lockedDoor.GetComponent<Animator>().SetBool("Open", true);
+                       
                     }
                 }
             }
@@ -52,13 +58,15 @@ public class KniferKey : MonoBehaviour
             {
                 anim.SetBool("Activate", true);
 
-                if (anim.GetCurrentAnimatorStateInfo(0).IsName("PFH_Run"))
+                if (anim.GetCurrentAnimatorStateInfo(0).IsName("Run"))
                 {
                     transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
 
                     if (lockedDoor != null)
                     {
+                        //AudioManager.instance.PlaySoundEffects(29);
                         lockedDoor.GetComponent<Animator>().SetBool("Open", true);
+                        
                     }
                 }
             }

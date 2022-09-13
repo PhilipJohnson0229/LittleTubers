@@ -8,12 +8,22 @@ public class BlamoGrab : MonoBehaviour
 
     void OnTriggerEnter(Collider _other)
     {
-        if (_other.tag == "Player") 
+        if (_other.tag == "Player")
         {
             Player player = _other.GetComponent<Player>();
-            if (player != null) 
+            if (player != null)
             {
                 player.Ensnare(blamo);
+            }
+        }
+
+        if (_other.tag == "Enemy") 
+        {
+            Berserker humanScum = _other.GetComponent<Berserker>();
+
+            if (humanScum != null) 
+            {
+                humanScum.Damage(4);
             }
         }
     }

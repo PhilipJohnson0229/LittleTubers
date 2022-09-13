@@ -12,11 +12,15 @@ public class PuzzlePiece : MonoBehaviour
 
             if (player != null) 
             {
-                player.canPickUpEventItem = true;
+                player.setCanPickUpEventItem(true);
 
                 player.currentKnifer = this.gameObject;
 
-                UIManager.instance.Notification("Press E to pick up the scumbag");
+                UIManager uiManager = GameObject.FindObjectOfType<UIManager>();
+                if (uiManager != null) 
+                {
+                    uiManager.Notification("Press E to pick up the scumbag");
+                }
             }
         }
     }
@@ -29,7 +33,7 @@ public class PuzzlePiece : MonoBehaviour
 
             if (player != null)
             {
-                player.canPickUpEventItem = false;
+                player.setCanPickUpEventItem(false);
             }
         }
     }

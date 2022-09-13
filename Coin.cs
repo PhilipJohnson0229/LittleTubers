@@ -4,16 +4,13 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    public int _amount = 1;
     void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player") 
+        if (other.TryGetComponent<Player>(out var player)) 
         {
-            Player _player = other.GetComponent<Player>();
-
-            if (_player != null) 
+            if (player != null) 
             {
-                _player.CollectCoin(_amount);
+                player.playerData.setCoins(player.playerData.getCoins() + 1);
                 Destroy(this.gameObject);
             }
         }

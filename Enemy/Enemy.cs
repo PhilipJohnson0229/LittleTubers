@@ -20,17 +20,19 @@ public abstract class Enemy : MonoBehaviour
     [SerializeField]
     protected Vector3 _currentTarget;
     [SerializeField]
-    protected Animator _anim;
+    protected Animator anim;
+    [SerializeField]
+    protected Transform playerModel;
     [SerializeField]
     protected bool _isHit = false;
     [SerializeField]
     protected bool _isDead = false;
     [SerializeField]
-    protected Player _player;
+    protected Player player;
     public virtual void Init() 
     {
-        _anim = GetComponentInChildren<Animator>();
-        _player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>() ;
+        anim = GetComponentInChildren<Animator>();
+        player = GameObject.FindObjectOfType<Player>();
     }
 
     private void Start() 
@@ -52,7 +54,7 @@ public abstract class Enemy : MonoBehaviour
 
     public virtual void Update()
     {
-        if (_anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") && _anim.GetBool("InCombat") == false || _anim.GetBool("Kill") == true)
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") || anim.GetBool("Kill") == true)
         {
             return;
         }
@@ -70,23 +72,23 @@ public abstract class Enemy : MonoBehaviour
         if (_currentTarget == _pointA.position)
         {   
             _facing.y = 0f;
-            transform.localEulerAngles = _facing;
+            playerModel.localEulerAngles = _facing;
         }
         else if (_currentTarget == _pointB.position)
         { 
             _facing.y = 180f;
-            transform.localEulerAngles = _facing;
+            playerModel.localEulerAngles = _facing;
         }
 
         if (transform.position == _pointA.position)
         {
             _currentTarget = _pointB.position;
-            _anim.SetTrigger("Idle");
+            anim.SetTrigger("Idle");
         }
         else if (transform.position == _pointB.position)
         {
             _currentTarget = _pointA.position;
-            _anim.SetTrigger("Idle");
+            anim.SetTrigger("Idle");
         } 
        
 
@@ -96,23 +98,23 @@ public abstract class Enemy : MonoBehaviour
             transform.position = Vector3.MoveTowards(transform.position, _currentTarget, _speed * Time.deltaTime);
         }
 
-        if (_player != null) 
+        if (player != null) 
         {
-            float _distance = Vector3.Distance(this.transform.localPosition, _player.transform.localPosition);
+            float _distance = Vector3.Distance(this.transform.localPosition, player.transform.localPosition);
             if (_distance > 5.0f)
             {
                 _isHit = false;
-                _anim.SetBool("InCombat", false);
+                anim.SetBool("InCombat", false);
             }
 
-            Vector3 _direction = transform.localPosition - _player.transform.localPosition;
+            Vector3 _direction = transform.localPosition - player.transform.localPosition;
 
-            if (_direction.z > 0 && _anim.GetBool("InCombat") == true)
+            if (_direction.z > 0 && anim.GetBool("InCombat") == true)
             {
                 _facing.y = 180f;
                 transform.localEulerAngles = _facing;
             }
-            else if (_direction.z < 0 && _anim.GetBool("InCombat") == true)
+            else if (_direction.z < 0 && anim.GetBool("InCombat") == true)
             {
                 _facing.y = 0f;
                 transform.localEulerAngles = _facing;
@@ -121,8 +123,23 @@ public abstract class Enemy : MonoBehaviour
 
         
     }
+
+    public virtual void SetPatrolPoints(Transform a, Transform b)
+    {
+        _pointA = a;
+        _pointB = b;
+    }
     //an abstract methods constructor is an interface with a child class
     //basically the child class is required to call implement these methods
     //the child classes will simply implement this methoda dn fiil it with is own unique code
-   
+
+    public virtual bool IsDead()
+    {
+        return _isDead;
+    }
+
+    public virtual void Revive()
+    {
+        _isDead = false;
+    }
 }

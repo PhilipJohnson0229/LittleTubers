@@ -5,7 +5,7 @@ using UnityEngine;
 public class BossAnimEvents : MonoBehaviour
 {
     // Start is called before the first frame update
-
+    public int footSteps, jump, land;
 
     // Update is called once per frame
     public void PhaseCheck() 
@@ -41,5 +41,20 @@ public class BossAnimEvents : MonoBehaviour
     public void ReleaseCrow() 
     {
         BossPhase1Controller.instance.ReleaseTheCrow();
+    }
+
+    public void Footsteps()
+    {
+        AudioManager.instance.PlaySoundEffects(footSteps);
+    }
+
+    public void PlayJumpSound()
+    {
+        AudioManager.instance.PlaySoundEffects(jump);
+    }
+
+    public void PlayLandSound()
+    {
+        AudioManager.instance.PlaySoundEffects(land);
     }
 }
