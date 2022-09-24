@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class RushingBlamo : Enemy
 {
-    protected Vector3 direction;
-    protected bool facingLeft;
-    protected BoxCollider boxCol;
-    protected float h = 0;
+    private Vector3 direction;
+    private bool facingLeft;
+    private BoxCollider boxCol;
+    private float h = 0;
 
     private float attackDistance = 2f;
     [SerializeField]
@@ -18,10 +18,11 @@ public class RushingBlamo : Enemy
     private Transform trackedTarget;
     private bool attacking = false;
 
-    public float distanceTracker;
-    protected Rigidbody rb;
+    [SerializeField]
+    private float distanceTracker;
+    private Rigidbody rb;
 
-    public float gravity = 5.0f;
+    private float gravity = 5.0f;
     
     public override void Init()
     {

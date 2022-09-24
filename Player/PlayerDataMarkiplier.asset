@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 69c7149b1938f9443a2cfcb74286dd99, type: 3}
-  m_Name: PlayerData
+  m_Name: PlayerDataMarkiplier
   m_EditorClassIdentifier: 
-  health: 6
+  health: 0
+  maxHealth: 6
   coins: 0
   inHell: 0
-  died: 1
+  died: 0
+  hasKey: 0
+  speed: 5
+  gravity: 15
+  jumpForce: 5
   girneyTime: 40
-  _speed: 5
-  _gravity: 20
-  _jumpForce: 11
-  jumpSound: 27
-  enemyJumpSound: 37
-  hellSplat: {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+  jumpSound: 0
+  enemyJumpSound: 0
+  hellSplat: {fileID: 0}

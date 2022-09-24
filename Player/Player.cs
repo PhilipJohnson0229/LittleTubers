@@ -17,6 +17,7 @@ public class Player : MonoBehaviour, IDamageable
 
     private Ledge ledge;
 
+    [SerializeField]
     private bool onLedge, nearLadder, onLadder, climbingOffLadder, isJumping;
 
     private bool isKnocking, canPickUpEventItem, canDropEventItem, carryingEventItem, canBeHurt;
@@ -184,7 +185,7 @@ public class Player : MonoBehaviour, IDamageable
             }
         }
         
-        if(!onLedge)
+        if(!onLedge && characterController.enabled)
         {
             if (airBody != null)
             {
